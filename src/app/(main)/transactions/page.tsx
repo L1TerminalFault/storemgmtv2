@@ -137,7 +137,7 @@ export default function TransactionsPage() {
                                     className="w-full text-center text-2xl font-bold bg-theme-background border border-theme-border rounded-2xl p-4 outline-none focus:border-theme-accent text-theme-text transition-colors" 
                                 />
                                 
-                                <div className="p-4 bg-theme-accent/5 rounded-2xl flex justify-between items-center text-theme-accent border border-theme-accent/10">
+                                <div className="p-4 bg-theme-accent/5 hidden rounded-2xl flex justify-between items-center text-theme-accent border border-theme-accent/10">
                                     <span className="font-semibold text-sm">Total Sale Value:</span>
                                     <span className="font-black text-xl">${((Number(sellAmount) || 0) * (selectedItem?.itemId?.unitPrice || 0)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                                 </div>
