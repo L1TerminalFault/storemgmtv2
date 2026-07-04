@@ -119,8 +119,8 @@ export default function TransactionsPage() {
             {/* Sell Modal */}
             <AnimatePresence>
                 {showSellModal && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                        <motion.div initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }} className="bg-theme-card p-6 rounded-3xl w-full max-w-sm shadow-2xl border border-theme-border/50">
+                    <motion.div onClick={() => setShowSellModal(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <motion.div onClick={e => e.stopPropagation()} initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }} className="bg-theme-card p-6 rounded-3xl w-full max-w-sm shadow-2xl border border-theme-border/50">
                             <h2 className="text-2xl font-bold mb-1">Sell {selectedItem?.itemId?.name}</h2>
                             <p className="text-sm text-theme-text/50 mb-6">Current Stock: <span className="font-bold text-theme-text">{selectedItem?.amount}</span></p>
                             

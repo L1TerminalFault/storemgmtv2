@@ -188,42 +188,44 @@ export default function HomeDashboard() {
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-3 border-b border-theme-border/50 pb-2">
           <h2 className="text-xl font-black uppercase tracking-widest text-emerald-400">
-            Total Remainings in Store
+            {isAdmin ? "Total Remainings in Store" : "Store Active Inventory"}
           </h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col bg-theme-card p-8 rounded-3xl shadow-xl border border-emerald-500/20 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 p-8 opacity-5">
-              <FiDollarSign className="text-9xl" />
-            </div>
-            <div className="flex flex-col gap-1 relative z-10">
-              <span className="font-bold tracking-widest text-xs uppercase text-emerald-400">
-                Total Store Valuation
-              </span>
-              <h2 className="text-5xl font-extrabold text-theme-text mt-2">
-                ${storageValue.toLocaleString()}
-              </h2>
-            </div>
-          </motion.div>
+        <div className={`grid grid-cols-1 ${isAdmin ? "md:grid-cols-2" : ""} gap-6 w-full`}>
+          {isAdmin && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col bg-theme-card p-8 rounded-3xl shadow-xl border border-emerald-500/20 relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 p-8 opacity-5">
+                <FiDollarSign className="text-9xl" />
+              </div>
+              <div className="flex flex-col gap-1 relative z-10">
+                <span className="font-bold tracking-widest text-xs uppercase text-emerald-400">
+                  Total Store Valuation
+                </span>
+                <h2 className="text-5xl font-extrabold text-theme-text mt-2">
+                  ${storageValue.toLocaleString()}
+                </h2>
+              </div>
+            </motion.div>
+          )}
 
           <motion.button
-            onClick={() => setShowStorageItemsModal(true)}
-            whileHover={{ scale: 1.02 }}
+            onClick={() => isAdmin ? setShowStorageItemsModal(true) : null}
+            whileHover={isAdmin ? { scale: 1.02 } : { scale: 1 }}
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
-            className="flex flex-col text-left bg-theme-card p-8 rounded-3xl shadow-xl border border-sky-500/20 relative overflow-hidden hover:border-sky-500/50 cursor-pointer focus:outline-none"
+            className={`flex flex-col text-left bg-theme-card p-8 rounded-3xl shadow-xl border border-sky-500/20 relative overflow-hidden ${isAdmin ? 'hover:border-sky-500/50 cursor-pointer focus:outline-none' : 'cursor-default pointer-events-none'}`}
           >
             <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
               <FiPackage className="text-9xl" />
             </div>
             <div className="flex flex-col gap-1 relative z-10 pointer-events-none">
               <span className="font-bold tracking-widest text-xs uppercase text-sky-400">
-                Physical Remaining Items (Click)
+                Physical Remaining Items {isAdmin && "(Click)"}
               </span>
               <h2 className="text-5xl font-extrabold text-theme-text mt-2">
                 {storageCount} Items
@@ -285,83 +287,114 @@ export default function HomeDashboard() {
         )}
       </div>
 
-      {/* Main Chart Section */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.3 }}
-        className="w-full flex flex-col xl:flex-row mt-4"
-      >
-        <div className="w-full h-[350px] bg-theme-card p-6 rounded-3xl shadow-xl flex flex-col border border-theme-border/30">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-            <h3 className="text-lg font-bold tracking-wide">
-              {isAdmin ? "Assets Trajectory vs Shops Allocation" : "Store Performance Trajectory"}
-            </h3>
-          </div>
-          <div className="flex-1 w-full min-h-[240px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={chartData}
-                margin={{ top: 10, right: 30, left: -20, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="colorStorage" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.6} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorShops" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f97316" stopOpacity={0.6} />
-                    <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="var(--borderCol)"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="name"
-                  stroke="var(--fg)"
-                  opacity={0.5}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  stroke="var(--fg)"
-                  opacity={0.5}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "var(--cardBg)",
-                    borderRadius: "12px",
-                  }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="storage"
-                  stroke="#10b981"
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#colorStorage)"
-                />
-                {isAdmin && (
-                  <Area
+      {/* Main Chart Section OR Sales View */}
+      {isAdmin ? (
+        <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+            className="w-full flex flex-col xl:flex-row mt-4"
+        >
+            <div className="w-full h-[350px] bg-theme-card p-6 rounded-3xl shadow-xl flex flex-col border border-theme-border/30">
+            <div className="flex items-center gap-3 mb-6">
+                <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                <h3 className="text-lg font-bold tracking-wide">
+                Assets Trajectory vs Shops Allocation
+                </h3>
+            </div>
+            <div className="flex-1 w-full min-h-[240px]">
+                <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                    data={chartData}
+                    margin={{ top: 10, right: 30, left: -20, bottom: 0 }}
+                >
+                    <defs>
+                    <linearGradient id="colorStorage" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.6} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorShops" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#f97316" stopOpacity={0.6} />
+                        <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                    </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="var(--borderCol)"
+                    vertical={false}
+                    />
+                    <XAxis
+                    dataKey="name"
+                    stroke="var(--fg)"
+                    opacity={0.5}
+                    tickLine={false}
+                    axisLine={false}
+                    />
+                    <YAxis
+                    stroke="var(--fg)"
+                    opacity={0.5}
+                    tickLine={false}
+                    axisLine={false}
+                    />
+                    <Tooltip
+                    contentStyle={{
+                        backgroundColor: "var(--cardBg)",
+                        borderRadius: "12px",
+                    }}
+                    />
+                    <Area
                     type="monotone"
-                    dataKey="shops"
-                    stroke="#f97316"
+                    dataKey="storage"
+                    stroke="#10b981"
                     strokeWidth={3}
                     fillOpacity={1}
-                    fill="url(#colorShops)"
-                  />
-                )}
-              </AreaChart>
-            </ResponsiveContainer>
+                    fill="url(#colorStorage)"
+                    />
+                    <Area
+                        type="monotone"
+                        dataKey="shops"
+                        stroke="#f97316"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorShops)"
+                    />
+                </AreaChart>
+                </ResponsiveContainer>
+            </div>
+            </div>
+        </motion.div>
+      ) : (
+          <div className="flex flex-col gap-4 mt-4 w-full">
+            <h3 className="text-xl font-black uppercase tracking-widest text-emerald-400 mb-2 border-b border-theme-border/50 pb-2">
+              Item Allocations
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {storage?.inventory
+                ?.filter((i: any) => i.amount > 0)
+                .map((inv: any) => {
+                const itemData = inv.itemId;
+                return (
+                    <motion.div
+                        key={itemData?._id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-theme-card border border-theme-border/40 p-6 rounded-3xl flex flex-col gap-3 shadow-lg"
+                    >
+                    <span className="font-extrabold text-xl truncate">
+                        {itemData?.name}
+                    </span>
+                    <div className="flex flex-col gap-1 w-full bg-theme-background p-4 rounded-2xl">
+                        <div className="flex justify-between items-center text-sm font-semibold">
+                        <span className="text-theme-text/50">Current Stock</span>
+                        <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full font-bold">{inv.amount} Items</span>
+                        </div>
+                    </div>
+                    </motion.div>
+                );
+                })}
+            </div>
           </div>
-        </div>
-      </motion.div>
+      )}
 
       {/* Modal for adding New Item Catalog */}
       <AnimatePresence>
