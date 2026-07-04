@@ -168,7 +168,7 @@ export default function HomeDashboard() {
               onClick={() => setShowAddToStorageModal(true)}
               className="flex items-center justify-center gap-2 px-5 py-2.5 bg-theme-accent text-theme-background rounded-full font-semibold hover:opacity-90 transition-all shrink-0"
             >
-              <FiPlus /> Add to Storage
+              <FiPlus /> Add to Store
             </button>
           </div>
         )}
@@ -178,7 +178,7 @@ export default function HomeDashboard() {
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-3 border-b border-theme-border/50 pb-2">
           <h2 className="text-xl font-black uppercase tracking-widest text-emerald-400">
-            Total Remainings in Storage
+            Total Remainings in Store
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
@@ -192,7 +192,7 @@ export default function HomeDashboard() {
             </div>
             <div className="flex flex-col gap-1 relative z-10">
               <span className="font-bold tracking-widest text-xs uppercase text-emerald-400">
-                Total Storage Valuation
+                Total Store Valuation
               </span>
               <h2 className="text-5xl font-extrabold text-theme-text mt-2">
                 ${storageValue.toLocaleString()}
@@ -416,10 +416,10 @@ export default function HomeDashboard() {
               exit={{ opacity: 0 }}
               className="bg-theme-card p-6 rounded-3xl w-full max-w-md shadow-2xl border border-theme-border/50"
             >
-              <h2 className="text-2xl font-bold mb-2">Restock Storage</h2>
+              <h2 className="text-2xl font-bold mb-2">Restock Store</h2>
               <p className="text-sm text-theme-text/60 mb-6">
                 Select an item from your catalog to add physical quantities to
-                storage.
+                store.
               </p>
               <form
                 onSubmit={handleAddItemToStorage}
@@ -461,7 +461,7 @@ export default function HomeDashboard() {
                     type="submit"
                     className="px-6 py-2 rounded-xl bg-theme-accent text-theme-background font-bold hover:opacity-90"
                   >
-                    Restock Storage
+                    Restock Store
                   </button>
                 </div>
               </form>
@@ -479,9 +479,9 @@ export default function HomeDashboard() {
               exit={{ opacity: 0 }}
               className="bg-theme-card p-6 rounded-3xl w-full max-w-md shadow-2xl border border-theme-border/50 max-h-[80vh] flex flex-col flex-nowrap"
             >
-              <h2 className="text-2xl font-bold mb-2">Storage Inventory</h2>
+              <h2 className="text-2xl font-bold mb-2">Store Inventory</h2>
               <p className="text-sm text-theme-text/60 mb-6 shrink-0">
-                List of all items physically remaining in storage right now.
+                List of all items physically remaining in store right now.
               </p>
               <div className="flex flex-col gap-3 overflow-y-auto pr-2 pb-4 scrollbar-hidden">
                 {storage?.inventory
@@ -508,7 +508,7 @@ export default function HomeDashboard() {
                   ))}
                 {(!storage?.inventory || storage.inventory.length === 0) && (
                   <div className="text-center italic text-theme-text/50 py-4">
-                    No items remain in storage.
+                    No items remain in store.
                   </div>
                 )}
               </div>

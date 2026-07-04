@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiPlus, FiBox } from "react-icons/fi";
+import { FiPlus, FiBox, FiUserPlus } from "react-icons/fi";
 import { CgSpinner } from "react-icons/cg";
 import { useStoreStore } from "@/lib/store";
 
@@ -23,6 +23,11 @@ export default function ShopsPage() {
     // Modal Create Shop
     const [showCreateShopModal, setShowCreateShopModal] = useState(false);
     const [newShopTitle, setNewShopTitle] = useState("");
+
+    // Modal Assign Staff
+    const [showAddStaffModal, setShowAddStaffModal] = useState(false);
+    const [staffEmail, setStaffEmail] = useState("");
+    const [staffStatus, setStaffStatus] = useState({ loading: false, message: "" });
 
 	useEffect(() => {
 		async function loadData() {
@@ -81,6 +86,27 @@ export default function ShopsPage() {
         }
     };
 
+    const handleAddStaff = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setStaffStatus({ loading: true, message: "" });
+        try {
+            const res = await fetch("/api/shops/staff", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ shopId: selectedShopId, email: staffEmail })
+            });
+            if (res.ok) {
+                setStaffStatus({ loading: false, message: "Successfully assigned user!" });
+                setStaffEmail("");
+            } else {
+                const text = await res.text();
+                setStaffStatus({ loading: false, message: text || "Failed to assign user." });
+            }
+        } catch (e) {
+            setStaffStatus({ loading: false, message: "Network error." });
+        }
+    };
+
 	if (loading) {
 		return (
 			<div className="w-full h-full flex flex-col items-center justify-center text-theme-text opacity-70">
@@ -97,7 +123,7 @@ export default function ShopsPage() {
 			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex flex-col gap-2">
                     <h1 className="text-3xl font-extrabold tracking-tight">Manage Shops</h1>
-                    <p className="text-theme-text/50">Allocate items from your global storage to individual shops.</p>
+                    <p className="text-theme-text/50">Allocate items from your global store to individual shops.</p>
                 </div>
                 <button onClick={() => setShowCreateShopModal(true)} className="flex items-center gap-2 px-5 py-2.5 bg-theme-accent text-theme-background rounded-full font-semibold hover:opacity-90 transition-all shrink-0">
                     <FiPlus /> Create New Shop
@@ -130,9 +156,14 @@ export default function ShopsPage() {
                             <h2 className="text-4xl font-extrabold">{selectedShop.title}</h2>
                             <span className="text-sm font-semibold text-emerald-400 mt-2 bg-emerald-500/10 self-start px-3 py-1 rounded-full">{selectedShop.inventory?.length || 0} unique items allocated</span>
                         </div>
-                        <button onClick={() => setShowTransferModal(true)} className="flex items-center gap-2 px-6 py-3 bg-theme-accent/20 border border-theme-accent/30 text-theme-accent rounded-full font-extrabold hover:bg-theme-accent hover:text-theme-background transition-all hover:scale-105 active:scale-95 shadow-xl relative z-10">
-                            <FiBox /> Transfer Items to Shop
-                        </button>
+                        <div className="flex flex-col sm:flex-row gap-3 relative z-10 w-full lg:w-auto mt-4 lg:mt-0">
+                            <button onClick={() => setShowAddStaffModal(true)} className="flex items-center justify-center gap-2 px-6 py-3 bg-theme-background border border-emerald-500/30 text-emerald-400 rounded-full font-extrabold hover:bg-emerald-500/10 transition-all hover:scale-105 active:scale-95 shadow-xl">
+                                <FiUserPlus /> Assign Staff
+                            </button>
+                            <button onClick={() => setShowTransferModal(true)} className="flex items-center justify-center gap-2 px-6 py-3 bg-theme-accent/20 border border-theme-accent/30 text-theme-accent rounded-full font-extrabold hover:bg-theme-accent hover:text-theme-background transition-all hover:scale-105 active:scale-95 shadow-xl">
+                                <FiBox /> Transfer Items
+                            </button>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -191,7 +222,7 @@ export default function ShopsPage() {
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                         <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-theme-card p-6 rounded-3xl w-full max-w-md shadow-2xl border border-theme-border/50">
                             <h2 className="text-2xl font-bold mb-4">Transfer to {selectedShop?.title}</h2>
-                            <p className="text-sm text-theme-text/60 mb-6">Select an item from global storage to decrement from storage and add to the shop.</p>
+                            <p className="text-sm text-theme-text/60 mb-6">Select an item from global store to decrement from store and add to the shop.</p>
                             
                             <form onSubmit={handleTransfer} className="flex flex-col gap-4">
                                 <select 
@@ -200,10 +231,10 @@ export default function ShopsPage() {
                                     required
                                     className="w-full bg-theme-background border border-theme-border rounded-xl p-3 outline-none focus:border-theme-accent text-theme-text"
                                 >
-                                    <option value="" disabled>Select Item from Storage</option>
+                                    <option value="" disabled>Select Item from Store</option>
                                     {storage?.inventory?.filter((i:any)=>i.amount > 0).map((inv: any) => (
                                         <option key={inv.productId?._id} value={inv.productId?._id}>
-                                            {inv.productId?.name} ({inv.amount} in storage)
+                                            {inv.productId?.name} ({inv.amount} left)
                                         </option>
                                     ))}
                                 </select>
@@ -221,6 +252,40 @@ export default function ShopsPage() {
                                 <div className="flex gap-3 justify-end mt-4">
                                     <button type="button" onClick={() => setShowTransferModal(false)} className="px-4 py-2 rounded-xl text-theme-text/60 hover:text-theme-text">Cancel</button>
                                     <button type="submit" className="px-6 py-2 rounded-xl bg-theme-accent text-theme-background font-bold hover:opacity-90">Confirm Transfer</button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Add Staff Modal */}
+            <AnimatePresence>
+                {showAddStaffModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-theme-card p-6 rounded-3xl w-full max-w-sm shadow-2xl border border-theme-border/50">
+                            <h2 className="text-2xl font-bold mb-2">Assign Sales Staff</h2>
+                            <p className="text-sm text-theme-text/60 mb-6">Enter the user's email address to assign them to {selectedShop?.title}.</p>
+                            
+                            <form onSubmit={handleAddStaff} className="flex flex-col gap-4">
+                                <input 
+                                    type="email"
+                                    value={staffEmail} 
+                                    onChange={e => setStaffEmail(e.target.value)} 
+                                    required
+                                    placeholder="user@example.com" 
+                                    className="w-full bg-theme-background border border-theme-border rounded-xl p-3 outline-none focus:border-theme-accent text-theme-text"
+                                />
+                                {staffStatus.message && (
+                                    <p className={`text-sm ${staffStatus.message.includes("success") || staffStatus.message.includes("Assigned") ? "text-emerald-400" : "text-red-400"}`}>
+                                        {staffStatus.message}
+                                    </p>
+                                )}
+                                <div className="flex gap-3 justify-end mt-4">
+                                    <button type="button" onClick={() => { setShowAddStaffModal(false); setStaffStatus({ loading: false, message: ""}); setStaffEmail(""); }} className="px-4 py-2 rounded-xl text-theme-text/60 hover:text-theme-text">Close</button>
+                                    <button type="submit" disabled={staffStatus.loading} className="px-6 py-2 rounded-xl bg-emerald-500 text-white font-bold hover:opacity-90 disabled:opacity-50">
+                                        {staffStatus.loading ? "Assigning..." : "Assign"}
+                                    </button>
                                 </div>
                             </form>
                         </motion.div>
