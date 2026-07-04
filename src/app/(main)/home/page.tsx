@@ -44,14 +44,19 @@ export default function HomeDashboard() {
     async function loadData() {
       if (!effectiveUser) return;
       try {
-        const [storageRes, shopsRes, itemsRes] = await Promise.all([
-          fetch("/api/storage"),
-          fetch("/api/shops"),
-          fetch("/api/items"),
-        ]);
-        if (storageRes.ok) setStorage(await storageRes.json());
-        if (shopsRes.ok) setShops(await shopsRes.json());
-        if (itemsRes.ok) setCatalogItems(await itemsRes.json());
+        if (effectiveUser.role === "Sales") {
+          const res = await fetch("/api/transactions");
+          if (res.ok) setStorage(await res.json());
+        } else {
+          const [storageRes, shopsRes, itemsRes] = await Promise.all([
+            fetch("/api/storage"),
+            fetch("/api/shops"),
+            fetch("/api/items"),
+          ]);
+          if (storageRes.ok) setStorage(await storageRes.json());
+          if (shopsRes.ok) setShops(await shopsRes.json());
+          if (itemsRes.ok) setCatalogItems(await itemsRes.json());
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -114,10 +119,18 @@ export default function HomeDashboard() {
   // Calculate metrics
   let storageValue = 0;
   let storageCount = 0;
-  storage?.inventory?.forEach((item: any) => {
-    storageValue += item.amount * item.productId?.unitPrice || 0;
-    storageCount += item.amount;
-  });
+  
+  if (isAdmin) {
+    storage?.inventory?.forEach((item: any) => {
+      storageValue += item.amount * item.productId?.unitPrice || 0;
+      storageCount += item.amount;
+    });
+  } else {
+    storage?.inventory?.forEach((item: any) => {
+      storageValue += item.amount * item.itemId?.unitPrice || 0;
+      storageCount += item.amount;
+    });
+  }
 
   let shopsValue = 0;
   let shopsCount = 0;
@@ -283,7 +296,7 @@ export default function HomeDashboard() {
           <div className="flex items-center gap-3 mb-6">
             <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
             <h3 className="text-lg font-bold tracking-wide">
-              Assets Trajectory vs Shops Allocation
+              {isAdmin ? "Assets Trajectory vs Shops Allocation" : "Store Performance Trajectory"}
             </h3>
           </div>
           <div className="flex-1 w-full min-h-[240px]">
@@ -334,14 +347,16 @@ export default function HomeDashboard() {
                   fillOpacity={1}
                   fill="url(#colorStorage)"
                 />
-                <Area
-                  type="monotone"
-                  dataKey="shops"
-                  stroke="#f97316"
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#colorShops)"
-                />
+                {isAdmin && (
+                  <Area
+                    type="monotone"
+                    dataKey="shops"
+                    stroke="#f97316"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorShops)"
+                  />
+                )}
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -486,17 +501,19 @@ export default function HomeDashboard() {
               <div className="flex flex-col gap-3 overflow-y-auto pr-2 pb-4 scrollbar-hidden">
                 {storage?.inventory
                   ?.filter((i: any) => i.amount > 0)
-                  .map((inv: any) => (
+                  .map((inv: any) => {
+                    const itemData = isAdmin ? inv.productId : inv.itemId;
+                    return (
                     <div
-                      key={inv.productId?._id}
+                      key={itemData?._id}
                       className="flex justify-between items-center bg-theme-background border border-theme-border/50 p-4 rounded-2xl"
                     >
                       <div className="flex flex-col">
                         <span className="font-bold text-lg">
-                          {inv.productId?.name}
+                          {itemData?.name}
                         </span>
                         <span className="text-xs text-theme-text/50 font-semibold">
-                          ${inv.productId?.unitPrice} ea
+                          ${itemData?.unitPrice} ea
                         </span>
                       </div>
                       <div className="flex flex-col items-end">
@@ -505,7 +522,7 @@ export default function HomeDashboard() {
                         </span>
                       </div>
                     </div>
-                  ))}
+                  )})}
                 {(!storage?.inventory || storage.inventory.length === 0) && (
                   <div className="text-center italic text-theme-text/50 py-4">
                     No items remain in store.
