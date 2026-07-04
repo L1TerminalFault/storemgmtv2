@@ -78,9 +78,6 @@ export default function HomeDashboard() {
       setShowAddCatalogItemModal(false);
       setNewItemName("");
       setNewItemPrice("");
-      // Auto open add to storage modal for convenience
-      setStorageItemId(newItem._id);
-      setShowAddToStorageModal(true);
     }
   };
 
@@ -354,8 +351,9 @@ export default function HomeDashboard() {
       {/* Modal for adding New Item Catalog */}
       <AnimatePresence>
         {showAddCatalogItemModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAddCatalogItemModal(false)}>
             <motion.div
+              onClick={e => e.stopPropagation()}
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -409,8 +407,9 @@ export default function HomeDashboard() {
       {/* Modal for adding item to global storage */}
       <AnimatePresence>
         {showAddToStorageModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAddToStorageModal(false)}>
             <motion.div
+              onClick={e => e.stopPropagation()}
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -472,8 +471,9 @@ export default function HomeDashboard() {
       {/* Modal for viewing remaining storage items */}
       <AnimatePresence>
         {showStorageItemsModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowStorageItemsModal(false)}>
             <motion.div
+              onClick={e => e.stopPropagation()}
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ opacity: 0 }}

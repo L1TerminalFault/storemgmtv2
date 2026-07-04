@@ -98,6 +98,7 @@ export default function ShopsPage() {
             if (res.ok) {
                 setStaffStatus({ loading: false, message: "Successfully assigned user!" });
                 setStaffEmail("");
+                setTimeout(() => setShowAddStaffModal(false), 800);
             } else {
                 const text = await res.text();
                 setStaffStatus({ loading: false, message: text || "Failed to assign user." });
@@ -192,8 +193,8 @@ export default function ShopsPage() {
             {/* Create Shop Modal */}
             <AnimatePresence>
                 {showCreateShopModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ opacity: 0 }} className="bg-theme-card p-6 rounded-3xl w-full max-w-sm shadow-2xl border border-theme-border/50">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowCreateShopModal(false)}>
+                        <motion.div onClick={e => e.stopPropagation()} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ opacity: 0 }} className="bg-theme-card p-6 rounded-3xl w-full max-w-sm shadow-2xl border border-theme-border/50">
                             <h2 className="text-2xl font-bold mb-2">Create New Shop</h2>
                             <p className="text-sm text-theme-text/60 mb-6">Assign a branch name to start tracking localized inventory.</p>
                             
@@ -219,8 +220,8 @@ export default function ShopsPage() {
             {/* Transfer Modal */}
             <AnimatePresence>
                 {showTransferModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-theme-card p-6 rounded-3xl w-full max-w-md shadow-2xl border border-theme-border/50">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowTransferModal(false)}>
+                        <motion.div onClick={e => e.stopPropagation()} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-theme-card p-6 rounded-3xl w-full max-w-md shadow-2xl border border-theme-border/50">
                             <h2 className="text-2xl font-bold mb-4">Transfer to {selectedShop?.title}</h2>
                             <p className="text-sm text-theme-text/60 mb-6">Select an item from global store to decrement from store and add to the shop.</p>
                             
@@ -262,8 +263,8 @@ export default function ShopsPage() {
             {/* Add Staff Modal */}
             <AnimatePresence>
                 {showAddStaffModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-theme-card p-6 rounded-3xl w-full max-w-sm shadow-2xl border border-theme-border/50">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAddStaffModal(false)}>
+                        <motion.div onClick={e => e.stopPropagation()} initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-theme-card p-6 rounded-3xl w-full max-w-sm shadow-2xl border border-theme-border/50">
                             <h2 className="text-2xl font-bold mb-2">Assign Sales Staff</h2>
                             <p className="text-sm text-theme-text/60 mb-6">Enter the user's email address to assign them to {selectedShop?.title}.</p>
                             
