@@ -23,7 +23,7 @@ const routesAdmin: Route[] = [
 ];
 
 const routesUser: Route[] = [
-	{ name: "Home", href: "/home", icon: (p) => <FiHome {...p} /> },
+	// { name: "Home", href: "/home", icon: (p) => <FiHome {...p} /> },
 	{ name: "Transactions", href: "/transactions", icon: (p) => <FiFileText {...p} /> },
 	{ name: "Settings", href: "/settings", icon: (p) => <FiSettings {...p} /> },
 ];
