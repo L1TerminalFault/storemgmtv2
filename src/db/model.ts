@@ -34,53 +34,48 @@ export async function dbConnect() {
 
 // INFO: Schemas
 const itemSchema = new mongoose.Schema({
-    clerkId: String,
-    type: String,
-    name: String,
-    unitPrice: Number,
-    __more: String,
+  clerkId: String,
+  type: String,
+  name: String,
+  unitPrice: Number,
+  __more: String,
 });
 
 const storageSchema = new mongoose.Schema({
-    clerkId: String,
-    inventory: [
-        {
-            _id: false, // Prevents Mongoose from auto-generating sub-IDs for every single stock row
-            productId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'Item',
-            },
-            amount: Number,
-        },
-    ],
-    __more: String,
+  clerkId: String,
+  inventory: [
+    {
+      _id: false, // Prevents Mongoose from auto-generating sub-IDs for every single stock row
+      productId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Item",
+      },
+      amount: Number,
+    },
+  ],
+  __more: String,
 });
 
 const shopSchema = new mongoose.Schema({
-    clerkId: String,
-    title: String,
-    inventory: [
-        {
-            _id: false, // Prevents Mongoose from auto-generating sub-IDs for every single stock row
-            itemId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'Item',
-            },
-            amount: Number,
-        },
-    ],
-    __more: String,
+  clerkId: String,
+  title: String,
+  inventory: [
+    {
+      _id: false, // Prevents Mongoose from auto-generating sub-IDs for every single stock row
+      itemId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Item",
+      },
+      amount: Number,
+    },
+  ],
+  __more: String,
 });
 
 // INFO: Interfaces
-export const Item = 
-  mongoose.models.Item || 
-  mongoose.model("Item", itemSchema);
+export const Item = mongoose.models.Item || mongoose.model("Item", itemSchema);
 
-export const Shop = 
-  mongoose.models.Shop || 
-  mongoose.model("Shop", shopSchema);
+export const Shop = mongoose.models.Shop || mongoose.model("Shop", shopSchema);
 
 export const Storage =
-  mongoose.models.Storage ||
-  mongoose.model("Storage", storageSchema);
+  mongoose.models.Storage || mongoose.model("Storage", storageSchema);
