@@ -79,8 +79,8 @@ useEffect(() => {
     
     if (isMounted) {
       setSyncing(false);
-      // Wait exactly 10 seconds AFTER the requests finish before firing again
-      timerId = setTimeout(poll, 5000);
+      // Wait exactly 15 seconds AFTER the requests finish before firing again
+      timerId = setTimeout(poll, 15000);
     }
   }
 

@@ -94,8 +94,8 @@ useEffect(() => {
     
     if (isMounted) {
       setSyncing(false);
-      // Wait 10 seconds AFTER the fetch finishes before polling again
-      timerId = setTimeout(poll, 5000); 
+      // Wait 15 seconds AFTER the fetch finishes before polling again
+      timerId = setTimeout(poll, 15000); 
     }
   }
 
