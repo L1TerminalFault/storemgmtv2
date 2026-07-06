@@ -51,40 +51,63 @@ export default function HomeDashboard() {
   const [storageItemId, setStorageItemId] = useState("");
   const [storageItemAmount, setStorageItemAmount] = useState("");
 
-  const loadData = useCallback(
-    async function () {
-      if (!effectiveUser || syncing) return;
-      setSyncing(true);
+// 1. Separate your fetch logic from the polling state. 
+// Remove 'syncing' from this callback's dependencies entirely.
+const loadData = useCallback(async () => {
+  if (!effectiveUser) return;
 
-      try {
-        if (effectiveUser.role === "Sales") {
-          router.replace("/transactions");
-          const res = await fetch("/api/transactions");
-          if (res.ok) setStorage(await res.json());
-        } else {
-          const [storageRes, shopsRes, itemsRes] = await Promise.all([
-            fetch("/api/storage"),
-            fetch("/api/shops"),
-            fetch("/api/items"),
-          ]);
-          if (storageRes.ok) setStorage(await storageRes.json());
-          if (shopsRes.ok) setShops(await shopsRes.json());
-          if (itemsRes.ok) setCatalogItems(await itemsRes.json());
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-        setSyncing(false);
+  try {
+    if (effectiveUser.role === "Sales") {
+      // ONLY redirect if we aren't already on the page to prevent layout thrashing
+      if (window.location.pathname !== "/transactions") {
+        router.replace("/transactions");
       }
-    },
-    [effectiveUser, syncing, router],
-  );
+      
+      const res = await fetch("/api/transactions");
+      if (res.ok) setStorage(await res.json());
+    } else {
+      const [storageRes, shopsRes, itemsRes] = await Promise.all([
+        fetch("/api/storage"),
+        fetch("/api/shops"),
+        fetch("/api/items"),
+      ]);
+      if (storageRes.ok) setStorage(await storageRes.json());
+      if (shopsRes.ok) setShops(await shopsRes.json());
+      if (itemsRes.ok) setCatalogItems(await itemsRes.json());
+    }
+  } catch (e) {
+    console.error(e);
+  } finally {
+    setLoading(false);
+  }
+}, [effectiveUser, router]); // 'syncing' is no longer here!
 
-  useEffect(() => {
-    (() => loadData())();
-    setInterval(loadData, 10000);
-  }, [loadData]);
+
+// 2. Handle the Polling Orchestration smoothly
+useEffect(() => {
+  let timerId;
+  let isMounted = true;
+
+  async function poll() {
+    setSyncing(true);
+    await loadData();
+    
+    if (isMounted) {
+      setSyncing(false);
+      // Wait 10 seconds AFTER the fetch finishes before polling again
+      timerId = setTimeout(poll, 10000); 
+    }
+  }
+
+  // Kick off the first poll immediately
+  poll();
+
+  // CLEANUP: This kills the timer completely when the component unmounts
+  return () => {
+    isMounted = false;
+    clearTimeout(timerId);
+  };
+}, [loadData]); // Safely fires only if effectiveUser or router changes
 
   const handleCreateCatalogItem = async (
     e: React.SubmitEvent<HTMLFormElement>,

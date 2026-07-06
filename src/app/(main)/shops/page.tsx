@@ -39,36 +39,60 @@ export default function ShopsPage() {
     message: "",
   });
 
-  const loadData = useCallback(
-    async function () {
-      if (!effectiveUser || syncing) return;
-      setSyncing(true);
+// 1. Clean up the useCallback: Remove 'syncing' from the dependencies entirely!
+const loadData = useCallback(async () => {
+  if (!effectiveUser) return;
 
-      try {
-        const [shopsRes, storageRes] = await Promise.all([
-          fetch("/api/shops"),
-          fetch("/api/storage"),
-        ]);
-        if (shopsRes.ok) {
-          const data = await shopsRes.json();
-          setShops(data);
-          if (data.length > 0) setSelectedShopId(prev => prev ? prev : data[0]._id);
-        }
-        if (storageRes.ok) setStorage(await storageRes.json());
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-        setSyncing(false);
+  try {
+    const [shopsRes, storageRes] = await Promise.all([
+      fetch("/api/shops"),
+      fetch("/api/storage"),
+    ]);
+
+    if (shopsRes.ok) {
+      const data = await shopsRes.json();
+      setShops(data);
+      if (data.length > 0) {
+        setSelectedShopId(prev => (prev ? prev : data[0]._id));
       }
-    },
-    [effectiveUser, syncing],
-  );
+    }
+    
+    if (storageRes.ok) {
+      setStorage(await storageRes.json());
+    }
+  } catch (e) {
+    console.error(e);
+  } finally {
+    setLoading(false);
+  }
+}, [effectiveUser]); // Safely stripped down to only what is truly needed
 
-  useEffect(() => {
-    (() => loadData())();
-    setInterval(loadData, 10000);
-  }, [loadData]);
+
+// 2. Manage the orchestrating loop cleanly without infinite reruns
+useEffect(() => {
+  let timerId;
+  let isMounted = true;
+
+  async function poll() {
+    setSyncing(true);
+    await loadData();
+    
+    if (isMounted) {
+      setSyncing(false);
+      // Wait exactly 10 seconds AFTER the requests finish before firing again
+      timerId = setTimeout(poll, 10000);
+    }
+  }
+
+  // Execute immediate call on mount
+  poll();
+
+  // Cleanup: absolute protection against memory leaks
+  return () => {
+    isMounted = false;
+    clearTimeout(timerId);
+  };
+}, [loadData]); // Only re-synchronizes if effectiveUser changes
 
   const handleCreateShop = async (e: React.SubmitEvent<HTMLFormElement>) => {
         setSyncing(true);

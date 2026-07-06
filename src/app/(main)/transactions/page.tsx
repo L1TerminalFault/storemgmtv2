@@ -19,35 +19,55 @@ export default function TransactionsPage() {
   const [showSellModal, setShowSellModal] = useState(false);
   const [sellAmount, setSellAmount] = useState("");
 
-  const loadData = useCallback(
-    async function () {
-      if (!effectiveUser || syncing) return;
-      setSyncing(true);
+// 1. Clean up the useCallback: Isolate dependencies to just the user configuration
+const loadData = useCallback(async () => {
+  if (!effectiveUser) return;
 
-      // Sales agent will use effectiveUser.storeId
-      const qs = effectiveUser.storeId
-        ? `?storeId=${effectiveUser.storeId}`
-        : "";
-      try {
-        const res = await fetch(`/api/transactions${qs}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.length > 0) setActiveStore(data[0]); // Pick the first assigned
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-        setSyncing(false);
+  const qs = effectiveUser.storeId ? `?storeId=${effectiveUser.storeId}` : "";
+  
+  try {
+    const res = await fetch(`/api/transactions${qs}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.length > 0) {
+        // Optimize: Only set the initial store if one isn't already active
+        // This prevents overwriting user state or flashing the UI every 10 seconds
+        setActiveStore(prev => (prev ? prev : data[0]));
       }
-    },
-    [effectiveUser, syncing],
-  );
+    }
+  } catch (e) {
+    console.error(e);
+  } finally {
+    setLoading(false);
+  }
+}, [effectiveUser]); // Beautifully clean dependencies
 
-  useEffect(() => {
-    (() => loadData())();
-    setInterval(loadData, 10000);
-  }, [loadData]);
+
+// 2. Safely orchestrate the network pacing loop
+useEffect(() => {
+  let timerId;
+  let isMounted = true;
+
+  async function poll() {
+    setSyncing(true);
+    await loadData();
+    
+    if (isMounted) {
+      setSyncing(false);
+      // Wait exactly 10 seconds after the network payload lands
+      timerId = setTimeout(poll, 10000);
+    }
+  }
+
+  // Kick off the initial load
+  poll();
+
+  // Tear down timer completely when navigating away
+  return () => {
+    isMounted = false;
+    clearTimeout(timerId);
+  };
+}, [loadData]);
 
   const handleSell = async (e: React.SubmitEvent<HTMLFormElement>) => {
         setSyncing(true);
