@@ -127,17 +127,6 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 </motion.div>
-
-                <motion.div variants={itemVariants} className="bg-theme-card backdrop-blur-2xl //border border-theme-border rounded-3xl p-6 flex flex-col gap-4 shadow-lg w-full">
-                    <div className="text-xl font-bold tracking-wide">About</div>
-                    <div className="flex flex-col gap-4">
-                        <Link href="/about" className="py-4 px-6 bg-theme-background/50 hover:bg-theme-accent/20 hover:border-theme-accent rounded-2xl flex items-center justify-between transition-all w-full text-lg font-semibold">
-                            <span>System Information</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
-                        </Link>
-                    </div>
-                </motion.div>
-
             </motion.div>
         </div>
     );
