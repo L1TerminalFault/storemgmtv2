@@ -83,12 +83,13 @@ export default function HomeDashboard() {
 
   useEffect(() => {
     (() => loadData())();
-    setInterval(loadData, 5000);
+    setInterval(loadData, 10000);
   }, [loadData]);
 
   const handleCreateCatalogItem = async (
     e: React.SubmitEvent<HTMLFormElement>,
   ) => {
+    setSyncing(true);
     e.preventDefault();
     const res = await fetch("/api/items", {
       method: "POST",
@@ -106,11 +107,13 @@ export default function HomeDashboard() {
       setNewItemName("");
       setNewItemPrice("");
     }
+    setSyncing(false);
   };
 
   const handleAddItemToStorage = async (
     e: React.SubmitEvent<HTMLFormElement>,
   ) => {
+    setSyncing(true);
     e.preventDefault();
     const res = await fetch("/api/storage", {
       method: "POST",
@@ -127,6 +130,7 @@ export default function HomeDashboard() {
       setStorageItemAmount("");
       setStorageItemId("");
     }
+    setSyncing(false);
   };
 
   if (loading) {

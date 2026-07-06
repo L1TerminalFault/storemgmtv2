@@ -67,10 +67,11 @@ export default function ShopsPage() {
 
   useEffect(() => {
     (() => loadData())();
-    setInterval(loadData, 5000);
+    setInterval(loadData, 10000);
   }, [loadData]);
 
   const handleCreateShop = async (e: React.SubmitEvent<HTMLFormElement>) => {
+        setSyncing(true);
     e.preventDefault();
     const res = await fetch("/api/shops", {
       method: "POST",
@@ -84,9 +85,11 @@ export default function ShopsPage() {
       setShowCreateShopModal(false);
       setNewShopTitle("");
     }
+        setSyncing(false);
   };
 
   const handleTransfer = async (e: React.SubmitEvent<HTMLFormElement>) => {
+        setSyncing(true);
     e.preventDefault();
     const res = await fetch("/api/shops", {
       method: "PUT",
@@ -109,9 +112,11 @@ export default function ShopsPage() {
       setTransferAmount("");
       loadData();
     }
+        setSyncing(false);
   };
 
   const handleAddStaff = async (e: React.SubmitEvent<HTMLFormElement>) => {
+        setSyncing(true);
     e.preventDefault();
     setStaffStatus({ loading: true, message: "" });
     try {
@@ -138,6 +143,7 @@ export default function ShopsPage() {
       setStaffStatus({ loading: false, message: "Network error." });
       console.error(e);
     }
+        setSyncing(false);
   };
 
   if (loading) {

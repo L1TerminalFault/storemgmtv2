@@ -46,10 +46,11 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     (() => loadData())();
-    setInterval(loadData, 5000);
+    setInterval(loadData, 10000);
   }, [loadData]);
 
   const handleSell = async (e: React.SubmitEvent<HTMLFormElement>) => {
+        setSyncing(true);
     e.preventDefault();
     if (!selectedItem || !activeStore) return;
 
@@ -83,6 +84,7 @@ export default function TransactionsPage() {
       setSelectedItem(null);
       loadData();
     }
+        setSyncing(false);
   };
 
   const handleInitSell = (item: InventoryShopType) => {
