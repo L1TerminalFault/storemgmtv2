@@ -17,6 +17,7 @@ export default function ShopsPage() {
   const [shops, setShops] = useState<ShopType[]>([]);
   const [storage, setStorage] = useState<StorageType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
   // UI selections
   const [selectedShopId, setSelectedShopId] = useState("");
@@ -38,8 +39,10 @@ export default function ShopsPage() {
     message: "",
   });
 
-    const loadData = useCallback(async function() {
-      if (!effectiveUser) return;
+  const loadData = useCallback(
+    async function () {
+      if (!effectiveUser || syncing) return;
+      setSyncing(true);
 
       try {
         const [shopsRes, storageRes] = await Promise.all([
@@ -56,12 +59,16 @@ export default function ShopsPage() {
         console.error(e);
       } finally {
         setLoading(false);
+        setSyncing(false);
       }
-    }, [effectiveUser]);
+    },
+    [effectiveUser, syncing],
+  );
 
   useEffect(() => {
     (() => loadData())();
-  }, [effectiveUser, loadData]);
+    setInterval(loadData, 5);
+  }, [loadData]);
 
   const handleCreateShop = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useCallback, useState } from "react";
 import {
   AreaChart,
   Area,
@@ -11,7 +11,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import {
-  FiTrendingUp,
+  // FiTrendingUp,
   FiDollarSign,
   FiPackage,
   FiPlus,
@@ -20,15 +20,24 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { CgSpinner } from "react-icons/cg";
 import { useRouter } from "next/navigation";
+
 import { useStoreStore } from "@/lib/store";
+import type {
+  InventoryShopType,
+  InventoryStoreType,
+  ItemType,
+  StorageType,
+  ShopType,
+} from "@/lib/types";
 
 export default function HomeDashboard() {
   const router = useRouter();
   const effectiveUser = useStoreStore((s) => s.effectiveUser);
-  const [storage, setStorage] = useState<any>(null);
-  const [shops, setShops] = useState<any[]>([]);
-  const [catalogItems, setCatalogItems] = useState<any[]>([]);
+  const [storage, setStorage] = useState<StorageType | null>(null);
+  const [shops, setShops] = useState<ShopType[]>([]);
+  const [catalogItems, setCatalogItems] = useState<ItemType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
 
   // Modal States
   const [showAddCatalogItemModal, setShowAddCatalogItemModal] = useState(false);
@@ -42,12 +51,14 @@ export default function HomeDashboard() {
   const [storageItemId, setStorageItemId] = useState("");
   const [storageItemAmount, setStorageItemAmount] = useState("");
 
-  useEffect(() => {
-    async function loadData() {
-      if (!effectiveUser) return;
+  const loadData = useCallback(
+    async function () {
+      if (!effectiveUser || syncing) return;
+      setSyncing(true);
+
       try {
         if (effectiveUser.role === "Sales") {
-	  router.replace("/transactions");
+          router.replace("/transactions");
           const res = await fetch("/api/transactions");
           if (res.ok) setStorage(await res.json());
         } else {
@@ -64,12 +75,20 @@ export default function HomeDashboard() {
         console.error(e);
       } finally {
         setLoading(false);
+        setSyncing(false);
       }
-    }
-    loadData();
-  }, [effectiveUser]);
+    },
+    [effectiveUser, syncing, router],
+  );
 
-  const handleCreateCatalogItem = async (e: React.FormEvent) => {
+  useEffect(() => {
+    (() => loadData())();
+    setInterval(loadData, 5);
+  }, [loadData]);
+
+  const handleCreateCatalogItem = async (
+    e: React.SubmitEvent<HTMLFormElement>,
+  ) => {
     e.preventDefault();
     const res = await fetch("/api/items", {
       method: "POST",
@@ -89,7 +108,9 @@ export default function HomeDashboard() {
     }
   };
 
-  const handleAddItemToStorage = async (e: React.FormEvent) => {
+  const handleAddItemToStorage = async (
+    e: React.SubmitEvent<HTMLFormElement>,
+  ) => {
     e.preventDefault();
     const res = await fetch("/api/storage", {
       method: "POST",
@@ -122,25 +143,21 @@ export default function HomeDashboard() {
   // Calculate metrics
   let storageValue = 0;
   let storageCount = 0;
-  
+
   if (isAdmin) {
-    storage?.inventory?.forEach((item: any) => {
+    storage?.inventory.forEach((item: InventoryStoreType) => {
       storageValue += item.amount * item.productId?.unitPrice || 0;
-      storageCount += item.amount;
-    });
-  } else {
-    storage?.inventory?.forEach((item: any) => {
-      storageValue += item.amount * item.itemId?.unitPrice || 0;
       storageCount += item.amount;
     });
   }
 
   let shopsValue = 0;
-  let shopsCount = 0;
+  // let shopsCount = 0;
+
   shops.forEach((shop) => {
-    shop.inventory?.forEach((item: any) => {
+    shop.inventory?.forEach((item: InventoryShopType) => {
       shopsValue += item.amount * item.itemId?.unitPrice || 0;
-      shopsCount += item.amount;
+      // shopsCount += item.amount;
     });
   });
 
@@ -169,7 +186,7 @@ export default function HomeDashboard() {
             {isAdmin ? "Global Organization Overview" : "Store Summary"}
           </p>
         </div>
-        {isAdmin && (
+        {isAdmin && effectiveUser && (
           <div className="flex flex-col sm:flex-row gap-3 shrink-0 w-full sm:w-auto">
             <button
               onClick={() => setShowAddCatalogItemModal(true)}
@@ -194,8 +211,10 @@ export default function HomeDashboard() {
             {isAdmin ? "Total Remainings in Store" : "Store Active Inventory"}
           </h2>
         </div>
-        <div className={`grid grid-cols-1 ${isAdmin ? "md:grid-cols-2" : ""} gap-6 w-full`}>
-          {isAdmin && (
+        <div
+          className={`grid grid-cols-1 ${isAdmin ? "md:grid-cols-2" : ""} gap-6 w-full`}
+        >
+          {isAdmin && effectiveUser && (
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -216,12 +235,12 @@ export default function HomeDashboard() {
           )}
 
           <motion.button
-            onClick={() => isAdmin ? setShowStorageItemsModal(true) : null}
+            onClick={() => (isAdmin ? setShowStorageItemsModal(true) : null)}
             whileHover={isAdmin ? { scale: 1.02 } : { scale: 1 }}
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
-            className={`flex flex-col text-left bg-theme-card p-8 rounded-3xl shadow-xl border border-sky-500/20 relative overflow-hidden ${isAdmin ? 'hover:border-sky-500/50 cursor-pointer focus:outline-none' : 'cursor-default pointer-events-none'}`}
+            className={`flex flex-col text-left bg-theme-card p-8 rounded-3xl shadow-xl border border-sky-500/20 relative overflow-hidden ${isAdmin ? "hover:border-sky-500/50 cursor-pointer focus:outline-none" : "cursor-default pointer-events-none"}`}
           >
             <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
               <FiPackage className="text-9xl" />
@@ -253,7 +272,7 @@ export default function HomeDashboard() {
             {shops.map((shop) => {
               let sv = 0;
               let sc = 0;
-              shop.inventory?.forEach((i: any) => {
+              shop.inventory.forEach((i: InventoryShopType) => {
                 sv += i.amount * i.itemId?.unitPrice || 0;
                 sc += i.amount;
               });
@@ -291,120 +310,133 @@ export default function HomeDashboard() {
       </div>
 
       {/* Main Chart Section OR Sales View */}
-      {isAdmin ? (
+      {isAdmin && effectiveUser ? (
         <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
-            className="w-full flex flex-col xl:flex-row mt-4"
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3 }}
+          className="w-full flex flex-col xl:flex-row mt-4"
         >
-            <div className="w-full h-[350px] bg-theme-card p-6 rounded-3xl shadow-xl flex flex-col border border-theme-border/30">
+          <div className="w-full h-87.5 bg-theme-card p-6 rounded-3xl shadow-xl flex flex-col border border-theme-border/30">
             <div className="flex items-center gap-3 mb-6">
-                <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-                <h3 className="text-lg font-bold tracking-wide">
+              <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+              <h3 className="text-lg font-bold tracking-wide">
                 Assets Trajectory vs Shops Allocation
-                </h3>
+              </h3>
             </div>
-            <div className="flex-1 w-full min-h-[240px]">
-                <ResponsiveContainer width="100%" height="100%">
+            <div className="flex-1 w-full min-h-60">
+              <ResponsiveContainer width="100%" height="100%">
                 <AreaChart
-                    data={chartData}
-                    margin={{ top: 10, right: 30, left: -20, bottom: 0 }}
+                  data={chartData}
+                  margin={{ top: 10, right: 30, left: -20, bottom: 0 }}
                 >
-                    <defs>
-                    <linearGradient id="colorStorage" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.6} />
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  <defs>
+                    <linearGradient
+                      id="colorStorage"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.6} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="colorShops" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f97316" stopOpacity={0.6} />
-                        <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#f97316" stopOpacity={0.6} />
+                      <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
                     </linearGradient>
-                    </defs>
-                    <CartesianGrid
+                  </defs>
+                  <CartesianGrid
                     strokeDasharray="3 3"
                     stroke="var(--borderCol)"
                     vertical={false}
-                    />
-                    <XAxis
+                  />
+                  <XAxis
                     dataKey="name"
                     stroke="var(--fg)"
                     opacity={0.5}
                     tickLine={false}
                     axisLine={false}
-                    />
-                    <YAxis
+                  />
+                  <YAxis
                     stroke="var(--fg)"
                     opacity={0.5}
                     tickLine={false}
                     axisLine={false}
-                    />
-                    <Tooltip
+                  />
+                  <Tooltip
                     contentStyle={{
-                        backgroundColor: "var(--cardBg)",
-                        borderRadius: "12px",
+                      backgroundColor: "var(--cardBg)",
+                      borderRadius: "12px",
                     }}
-                    />
-                    <Area
+                  />
+                  <Area
                     type="monotone"
                     dataKey="storage"
                     stroke="#10b981"
                     strokeWidth={3}
                     fillOpacity={1}
                     fill="url(#colorStorage)"
-                    />
-                    <Area
-                        type="monotone"
-                        dataKey="shops"
-                        stroke="#f97316"
-                        strokeWidth={3}
-                        fillOpacity={1}
-                        fill="url(#colorShops)"
-                    />
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="shops"
+                    stroke="#f97316"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorShops)"
+                  />
                 </AreaChart>
-                </ResponsiveContainer>
-            </div>
-            </div>
-        </motion.div>
-      ) : (
-          <div className="flex flex-col gap-4 mt-4 w-full">
-            <h3 className="text-xl font-black uppercase tracking-widest text-emerald-400 mb-2 border-b border-theme-border/50 pb-2">
-              Item Allocations
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {storage?.inventory
-                ?.filter((i: any) => i.amount > 0)
-                .map((inv: any) => {
-                const itemData = inv.itemId;
-                return (
-                    <motion.div
-                        key={itemData?._id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="bg-theme-card border border-theme-border/40 p-6 rounded-3xl flex flex-col gap-3 shadow-lg"
-                    >
-                    <span className="font-extrabold text-xl truncate">
-                        {itemData?.name}
-                    </span>
-                    <div className="flex flex-col gap-1 w-full bg-theme-background p-4 rounded-2xl">
-                        <div className="flex justify-between items-center text-sm font-semibold">
-                        <span className="text-theme-text/50">Current Stock</span>
-                        <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full font-bold">{inv.amount} Items</span>
-                        </div>
-                    </div>
-                    </motion.div>
-                );
-                })}
+              </ResponsiveContainer>
             </div>
           </div>
+        </motion.div>
+      ) : (
+        <div className="flex flex-col gap-4 mt-4 w-full">
+          <h3 className="text-xl font-black uppercase tracking-widest text-emerald-400 mb-2 border-b border-theme-border/50 pb-2">
+            Item Allocations
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {storage?.inventory
+              ?.filter((i: InventoryStoreType) => i.amount > 0)
+              .map((inv: InventoryStoreType) => {
+                const itemData = inv.productId;
+                return (
+                  <motion.div
+                    key={itemData?._id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-theme-card border border-theme-border/40 p-6 rounded-3xl flex flex-col gap-3 shadow-lg"
+                  >
+                    <span className="font-extrabold text-xl truncate">
+                      {itemData?.name}
+                    </span>
+                    <div className="flex flex-col gap-1 w-full bg-theme-background p-4 rounded-2xl">
+                      <div className="flex justify-between items-center text-sm font-semibold">
+                        <span className="text-theme-text/50">
+                          Current Stock
+                        </span>
+                        <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full font-bold">
+                          {inv.amount} Items
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+          </div>
+        </div>
       )}
 
       {/* Modal for adding New Item Catalog */}
       <AnimatePresence>
         {showAddCatalogItemModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAddCatalogItemModal(false)}>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setShowAddCatalogItemModal(false)}
+          >
             <motion.div
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -458,9 +490,12 @@ export default function HomeDashboard() {
       {/* Modal for adding item to global storage */}
       <AnimatePresence>
         {showAddToStorageModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowAddToStorageModal(false)}>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setShowAddToStorageModal(false)}
+          >
             <motion.div
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -484,7 +519,7 @@ export default function HomeDashboard() {
                   <option value="" disabled>
                     Select Item from Catalog
                   </option>
-                  {catalogItems.map((cItem: any) => (
+                  {catalogItems.map((cItem: ItemType) => (
                     <option key={cItem._id} value={cItem._id}>
                       {cItem.name} (${cItem.unitPrice})
                     </option>
@@ -522,9 +557,12 @@ export default function HomeDashboard() {
       {/* Modal for viewing remaining storage items */}
       <AnimatePresence>
         {showStorageItemsModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setShowStorageItemsModal(false)}>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setShowStorageItemsModal(false)}
+          >
             <motion.div
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -536,29 +574,30 @@ export default function HomeDashboard() {
               </p>
               <div className="flex flex-col gap-3 overflow-y-auto pr-2 pb-4 scrollbar-hidden">
                 {storage?.inventory
-                  ?.filter((i: any) => i.amount > 0)
-                  .map((inv: any) => {
-                    const itemData = isAdmin ? inv.productId : inv.itemId;
+                  ?.filter((i: InventoryStoreType) => i.amount > 0)
+                  .map((inv: InventoryStoreType) => {
+                    const itemData = inv.productId;
                     return (
-                    <div
-                      key={itemData?._id}
-                      className="flex justify-between items-center bg-theme-background border border-theme-border/50 p-4 rounded-2xl"
-                    >
-                      <div className="flex flex-col">
-                        <span className="font-bold text-lg">
-                          {itemData?.name}
-                        </span>
-                        <span className="text-xs text-theme-text/50 font-semibold">
-                          ${itemData?.unitPrice} ea
-                        </span>
+                      <div
+                        key={itemData?._id}
+                        className="flex justify-between items-center bg-theme-background border border-theme-border/50 p-4 rounded-2xl"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-bold text-lg">
+                            {itemData?.name}
+                          </span>
+                          <span className="text-xs text-theme-text/50 font-semibold">
+                            ${itemData?.unitPrice} ea
+                          </span>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full font-bold text-sm">
+                            {inv.amount} left
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex flex-col items-end">
-                        <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full font-bold text-sm">
-                          {inv.amount} left
-                        </span>
-                      </div>
-                    </div>
-                  )})}
+                    );
+                  })}
                 {(!storage?.inventory || storage.inventory.length === 0) && (
                   <div className="text-center italic text-theme-text/50 py-4">
                     No items remain in store.
