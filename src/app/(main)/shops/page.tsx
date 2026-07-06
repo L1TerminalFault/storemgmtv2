@@ -324,9 +324,10 @@ useEffect(() => {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 rounded-xl bg-theme-accent text-theme-background font-bold hover:opacity-90"
+                    disabled={syncing}
+                    className="px-6 py-2 rounded-xl bg-theme-accent text-theme-background font-bold hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    Create Shop
+                    {syncing ? <><CgSpinner className="animate-spin" /> Creating...</> : "Create Shop"}
                   </button>
                 </div>
               </form>
@@ -399,9 +400,10 @@ useEffect(() => {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 rounded-xl bg-theme-accent text-theme-background font-bold hover:opacity-90"
+                    disabled={syncing}
+                    className="px-6 py-2 rounded-xl bg-theme-accent text-theme-background font-bold hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    Confirm Transfer
+                    {syncing ? <><CgSpinner className="animate-spin" /> Transferring...</> : "Confirm Transfer"}
                   </button>
                 </div>
               </form>
@@ -461,9 +463,9 @@ useEffect(() => {
                   <button
                     type="submit"
                     disabled={staffStatus.loading}
-                    className="px-6 py-2 rounded-xl bg-emerald-500 text-white font-bold hover:opacity-90 disabled:opacity-50"
+                    className="px-6 py-2 rounded-xl bg-emerald-500 text-white font-bold hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {staffStatus.loading ? "Assigning..." : "Assign"}
+                    {staffStatus.loading ? <><CgSpinner className="animate-spin" /> Assigning...</> : "Assign"}
                   </button>
                 </div>
               </form>

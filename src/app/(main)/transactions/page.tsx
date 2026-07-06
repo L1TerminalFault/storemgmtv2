@@ -251,9 +251,10 @@ useEffect(() => {
                 <div className="flex flex-col gap-3 mt-4">
                   <button
                     type="submit"
-                    className="w-full py-4 rounded-xl bg-theme-accent text-theme-background font-black text-lg tracking-wide hover:opacity-90 transition-opacity"
+                    disabled={syncing}
+                    className="w-full py-4 rounded-xl bg-theme-accent text-theme-background font-black text-lg tracking-wide hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    Confirm Sale
+                    {syncing ? <><CgSpinner className="animate-spin text-xl" /> Processing...</> : "Confirm Sale"}
                   </button>
                   <button
                     type="button"

@@ -593,9 +593,10 @@ useEffect(() => {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 rounded-xl bg-theme-accent text-theme-background font-bold hover:opacity-90"
+                    disabled={syncing}
+                    className="px-6 py-2 rounded-xl bg-theme-accent text-theme-background font-bold hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    Draft Item
+                    {syncing ? <><CgSpinner className="animate-spin" /> Drafting...</> : "Draft Item"}
                   </button>
                 </div>
               </form>
@@ -668,9 +669,10 @@ useEffect(() => {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 rounded-xl bg-theme-accent text-theme-background font-bold hover:opacity-90"
+                    disabled={syncing}
+                    className="px-6 py-2 rounded-xl bg-theme-accent text-theme-background font-bold hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    Restock Store
+                    {syncing ? <><CgSpinner className="animate-spin" /> Restocking...</> : "Restock Store"}
                   </button>
                 </div>
               </form>
@@ -773,9 +775,10 @@ useEffect(() => {
                 <button
                   type="button"
                   onClick={handleResetInventories}
-                  className="px-6 py-2 rounded-xl bg-red-500 text-white font-bold hover:opacity-90"
+                  disabled={syncing}
+                  className="px-6 py-2 rounded-xl bg-red-500 text-white font-bold hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-50"
                 >
-                  Confirm Reset
+                  {syncing ? <><CgSpinner className="animate-spin" /> Resetting...</> : "Confirm Reset"}
                 </button>
               </div>
             </motion.div>
