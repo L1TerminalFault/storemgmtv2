@@ -67,6 +67,8 @@ export default function TransactionsPage() {
       // const { shop: updatedShop } = await res.json();
       // Need to populate it ideally, or just decrement local state for UX speed
       setActiveStore((prev) => {
+        if (!prev) return null;
+
         const newInv =
           prev?.inventory.map((i: InventoryShopType) => {
             if (i.itemId._id === selectedItem.itemId._id) {
