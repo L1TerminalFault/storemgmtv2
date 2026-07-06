@@ -72,6 +72,13 @@ const shopSchema = new mongoose.Schema({
   __more: String,
 });
 
+const transactionSchema = new mongoose.Schema({
+	// INFO: clerk id of the admin (the shop owner)
+	clerkId: String,
+	message: String,
+	__more: String,
+}, { timestamps: true });
+
 // INFO: Interfaces
 export const Item = mongoose.models.Item || mongoose.model("Item", itemSchema);
 
@@ -79,3 +86,6 @@ export const Shop = mongoose.models.Shop || mongoose.model("Shop", shopSchema);
 
 export const Storage =
   mongoose.models.Storage || mongoose.model("Storage", storageSchema);
+
+export const Transaction =
+	mongoose.models.Transaction || mongoose.model("Transaction", transactionSchema);

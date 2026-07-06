@@ -18,6 +18,7 @@ export default function TransactionsPage() {
   );
   const [showSellModal, setShowSellModal] = useState(false);
   const [sellAmount, setSellAmount] = useState("");
+  const [sellError, setSellError] = useState("");
 
 // 1. Clean up the useCallback: Isolate dependencies to just the user configuration
 const loadData = useCallback(async () => {
@@ -70,41 +71,48 @@ useEffect(() => {
 }, [loadData]);
 
   const handleSell = async (e: React.SubmitEvent<HTMLFormElement>) => {
-        setSyncing(true);
+    setSyncing(true);
+    setSellError("");
     e.preventDefault();
     if (!selectedItem || !activeStore) return;
 
-    const res = await fetch("/api/transactions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        shopId: activeStore._id,
-        itemId: selectedItem.itemId?._id,
-        amountSold: Number(sellAmount),
-      }),
-    });
-
-    if (res.ok) {
-      // const { shop: updatedShop } = await res.json();
-      // Need to populate it ideally, or just decrement local state for UX speed
-      setActiveStore((prev) => {
-        if (!prev) return null;
-
-        const newInv =
-          prev?.inventory.map((i: InventoryShopType) => {
-            if (i.itemId._id === selectedItem.itemId._id) {
-              return { ...i, amount: i.amount - Number(sellAmount) };
-            }
-            return i;
-          }) || prev;
-        return { ...prev, inventory: newInv };
+    try {
+      const res = await fetch("/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shopId: activeStore._id,
+          itemId: selectedItem.itemId?._id,
+          amountSold: Number(sellAmount),
+        }),
       });
-      setShowSellModal(false);
-      setSellAmount("");
-      setSelectedItem(null);
-      loadData();
+
+      if (res.ok) {
+        setActiveStore((prev) => {
+          if (!prev) return null;
+
+          const newInv =
+            prev?.inventory.map((i: InventoryShopType) => {
+              if (i.itemId._id === selectedItem.itemId._id) {
+                return { ...i, amount: i.amount - Number(sellAmount) };
+              }
+              return i;
+            }) || prev;
+          return { ...prev, inventory: newInv };
+        });
+        setShowSellModal(false);
+        setSellAmount("");
+        setSelectedItem(null);
+        loadData();
+      } else {
+        const text = await res.text();
+        setSellError(text || "Failed to complete sale.");
+      }
+    } catch (err: any) {
+      setSellError(err.message || "Network Error.");
+    } finally {
+      setSyncing(false);
     }
-        setSyncing(false);
   };
 
   const handleInitSell = (item: InventoryShopType) => {
@@ -231,6 +239,14 @@ useEffect(() => {
                     ).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </span>
                 </div>
+
+                <AnimatePresence>
+                  {sellError && (
+                    <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-red-500 font-bold text-sm bg-red-500/10 p-3 rounded-xl border border-red-500/20 text-center">
+                      {sellError}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <div className="flex flex-col gap-3 mt-4">
                   <button

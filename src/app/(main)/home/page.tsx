@@ -16,6 +16,9 @@ import {
   FiPackage,
   FiPlus,
   FiList,
+  FiAlertTriangle,
+  FiBell,
+  FiX,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { CgSpinner } from "react-icons/cg";
@@ -43,6 +46,9 @@ export default function HomeDashboard() {
   const [showAddCatalogItemModal, setShowAddCatalogItemModal] = useState(false);
   const [showAddToStorageModal, setShowAddToStorageModal] = useState(false);
   const [showStorageItemsModal, setShowStorageItemsModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showTransactionsModal, setShowTransactionsModal] = useState(false);
 
   // Form States
   const [newItemName, setNewItemName] = useState("");
@@ -50,6 +56,11 @@ export default function HomeDashboard() {
 
   const [storageItemId, setStorageItemId] = useState("");
   const [storageItemAmount, setStorageItemAmount] = useState("");
+
+  const [catalogError, setCatalogError] = useState("");
+  const [storageError, setStorageError] = useState("");
+  
+  const [transactionLogs, setTransactionLogs] = useState([]);
 
 // 1. Separate your fetch logic from the polling state. 
 // Remove 'syncing' from this callback's dependencies entirely.
@@ -66,14 +77,16 @@ const loadData = useCallback(async () => {
       const res = await fetch("/api/transactions");
       if (res.ok) setStorage(await res.json());
     } else {
-      const [storageRes, shopsRes, itemsRes] = await Promise.all([
+      const [storageRes, shopsRes, itemsRes, logsRes] = await Promise.all([
         fetch("/api/storage"),
         fetch("/api/shops"),
         fetch("/api/items"),
+        fetch("/api/transactions/log"),
       ]);
       if (storageRes.ok) setStorage(await storageRes.json());
       if (shopsRes.ok) setShops(await shopsRes.json());
       if (itemsRes.ok) setCatalogItems(await itemsRes.json());
+      if (logsRes.ok) setTransactionLogs(await logsRes.json());
     }
   } catch (e) {
     console.error(e);
@@ -113,47 +126,80 @@ useEffect(() => {
     e: React.SubmitEvent<HTMLFormElement>,
   ) => {
     setSyncing(true);
+    setCatalogError("");
     e.preventDefault();
-    const res = await fetch("/api/items", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: newItemName,
-        unitPrice: Number(newItemPrice),
-        type: "General",
-      }),
-    });
-    if (res.ok) {
-      const newItem = await res.json();
-      setCatalogItems((prev) => [...prev, newItem]);
-      setShowAddCatalogItemModal(false);
-      setNewItemName("");
-      setNewItemPrice("");
+    try {
+      const res = await fetch("/api/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newItemName,
+          unitPrice: Number(newItemPrice),
+          type: "General",
+        }),
+      });
+      if (res.ok) {
+        const newItem = await res.json();
+        setCatalogItems((prev) => [...prev, newItem]);
+        setShowAddCatalogItemModal(false);
+        setNewItemName("");
+        setNewItemPrice("");
+      } else {
+        const text = await res.text();
+        setCatalogError(text || "Failed to draft item.");
+      }
+    } catch (err: any) {
+      setCatalogError(err.message || "Network Error.");
+    } finally {
+      setSyncing(false);
     }
-    setSyncing(false);
   };
 
   const handleAddItemToStorage = async (
     e: React.SubmitEvent<HTMLFormElement>,
   ) => {
     setSyncing(true);
+    setStorageError("");
     e.preventDefault();
-    const res = await fetch("/api/storage", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        itemId: storageItemId,
-        amount: Number(storageItemAmount),
-      }),
-    });
-    if (res.ok) {
-      const updatedStorage = await res.json();
-      setStorage(updatedStorage);
-      setShowAddToStorageModal(false);
-      setStorageItemAmount("");
-      setStorageItemId("");
+    try {
+      const res = await fetch("/api/storage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemId: storageItemId,
+          amount: Number(storageItemAmount),
+        }),
+      });
+      if (res.ok) {
+        const updatedStorage = await res.json();
+        setStorage(updatedStorage);
+        setShowAddToStorageModal(false);
+        setStorageItemAmount("");
+        setStorageItemId("");
+      } else {
+        const text = await res.text();
+        setStorageError(text || "Failed to restock store.");
+      }
+    } catch (err: any) {
+      setStorageError(err.message || "Network Error.");
+    } finally {
+      setSyncing(false);
     }
-    setSyncing(false);
+  };
+
+  const handleResetInventories = async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/storage/reset", { method: "DELETE" });
+      if (res.ok) {
+        setShowResetModal(false);
+        await loadData();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSyncing(false);
+    }
   };
 
   if (loading) {
@@ -196,6 +242,20 @@ useEffect(() => {
     { name: "Week 4", storage: storageValue, shops: shopsValue },
   ];
 
+  // Calculate low stock items
+  const lowStock: any[] = [];
+  if (isAdmin) {
+    storage?.inventory?.forEach((item: any) => {
+      if (item.amount < 50) lowStock.push({ ...item, source: "Storage" });
+    });
+  }
+  shops.forEach((shop: any) => {
+    shop.inventory?.forEach((item: any) => {
+      if (item.amount < 50) lowStock.push({ ...item, source: `Shop: ${shop.title}` });
+    });
+  });
+  const notificationCount = lowStock.length;
+
   return (
     <div className="w-full h-full flex flex-col gap-8 px-4 md:px-8 py-6 pb-24 overflow-y-auto scrollbar-hidden">
       {/* Top Header */}
@@ -226,6 +286,29 @@ useEffect(() => {
               className="flex items-center justify-center gap-2 px-5 py-2.5 bg-theme-accent text-theme-background rounded-full font-semibold hover:opacity-90 transition-all shrink-0"
             >
               <FiPlus /> Add to Store
+            </button>
+            <button
+              onClick={() => setShowResetModal(true)}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-theme-card border border-red-500/50 text-red-400 rounded-full font-semibold hover:bg-red-500/10 transition-all shrink-0"
+            >
+              <FiAlertTriangle /> Reset All
+            </button>
+            <button
+              onClick={() => setShowTransactionsModal(true)}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-theme-background border border-theme-border text-theme-text rounded-full font-semibold hover:bg-theme-border/50 transition-all shrink-0"
+            >
+              <FiList /> Transactions
+            </button>
+            <button
+              onClick={() => setShowNotifications(true)}
+              className="relative p-2.5 bg-theme-background border border-theme-border rounded-full hover:bg-theme-border/50 transition-all shrink-0"
+            >
+              <FiBell className="text-xl" />
+              {notificationCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-theme-background">
+                  {notificationCount}
+                </span>
+              )}
             </button>
           </div>
         )}
@@ -493,6 +576,13 @@ useEffect(() => {
                   placeholder="Item Unit Price ($)"
                   className="w-full bg-theme-background border border-theme-border rounded-xl p-3 outline-none focus:border-theme-accent"
                 />
+                <AnimatePresence>
+                  {catalogError && (
+                    <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-red-500 font-bold text-sm bg-red-500/10 p-3 rounded-xl border border-red-500/20">
+                      {catalogError}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 <div className="flex gap-3 justify-end mt-4">
                   <button
                     type="button"
@@ -561,6 +651,13 @@ useEffect(() => {
                   placeholder="Quantity to Add"
                   className="w-full bg-theme-background border border-theme-border rounded-xl p-3 outline-none focus:border-theme-accent"
                 />
+                <AnimatePresence>
+                  {storageError && (
+                    <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="text-red-500 font-bold text-sm bg-red-500/10 p-3 rounded-xl border border-red-500/20">
+                      {storageError}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 <div className="flex gap-3 justify-end mt-4">
                   <button
                     type="button"
@@ -635,6 +732,157 @@ useEffect(() => {
                 <button
                   type="button"
                   onClick={() => setShowStorageItemsModal(false)}
+                  className="px-6 py-2 rounded-xl bg-theme-background border border-theme-border text-theme-text font-bold hover:bg-theme-border/50 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* Modal for resting inventory */}
+      <AnimatePresence>
+        {showResetModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+            onClick={() => setShowResetModal(false)}
+          >
+            <motion.div
+              onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="bg-theme-card p-6 rounded-3xl w-full max-w-md shadow-2xl border border-red-500 border-opacity-50"
+            >
+              <h2 className="text-2xl font-bold flex items-center gap-2 text-red-500 mb-2">
+                <FiAlertTriangle /> Reset Inventories
+              </h2>
+              <p className="text-sm text-theme-text/80 mb-6">
+                Are you absolutely sure you want to clear all inventories from storage and all shops? This action cannot be undone. 
+              </p>
+              
+              <div className="flex gap-3 justify-end mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(false)}
+                  className="px-4 py-2 rounded-xl text-theme-text/60 hover:text-theme-text"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetInventories}
+                  className="px-6 py-2 rounded-xl bg-red-500 text-white font-bold hover:opacity-90"
+                >
+                  Confirm Reset
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* Notifications Modal */}
+      <AnimatePresence>
+        {showNotifications && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-end">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowNotifications(false)}
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="bg-theme-background relative z-10 w-full max-w-md h-full shadow-2xl flex flex-col"
+            >
+              <div className="flex justify-between items-center bg-theme-background p-6 border-b border-theme-border/50 sticky top-0 z-20">
+                <h3 className="text-2xl font-black tracking-tight flex items-center gap-3">
+                  <FiBell /> Notifications
+                </h3>
+                <button
+                  onClick={() => setShowNotifications(false)}
+                  className="p-2 bg-theme-card rounded-full text-theme-text/60 hover:text-theme-text hover:bg-theme-border"
+                >
+                  <FiX />
+                </button>
+              </div>
+
+              <div className="flex flex-col p-6 gap-8 overflow-y-auto w-full h-full pb-20">
+                {notificationCount === 0 && (
+                  <div className="text-center font-bold text-theme-text/50 mt-10">
+                    All caught up! No notifications.
+                  </div>
+                )}
+                {lowStock.length > 0 && (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2 border-b border-theme-border/50 pb-2 mb-2">
+                      <FiAlertTriangle className="text-orange-400 text-lg" />
+                      <h4 className="font-bold uppercase tracking-wider text-sm flex-1">Low Stock Alerts</h4>
+                      <span className="bg-orange-500/20 text-orange-500 text-xs font-black px-2 py-0.5 rounded-full">{lowStock.length}</span>
+                    </div>
+                    {lowStock.map((item, i) => (
+                      <div key={i} className="bg-orange-500/10 rounded-xl p-3 border-l-4 border-orange-500 flex flex-col gap-1 text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold truncate max-w-[200px]">{item.itemId?.name || item.productId?.name}</span>
+                          <span className="font-bold text-orange-400">{item.amount} remaining</span>
+                        </div>
+                        <div className="text-theme-text/50 text-xs mt-1">
+                          Location: <span className="font-semibold text-theme-text">{item.source}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* Modal for viewing transactions */}
+      <AnimatePresence>
+        {showTransactionsModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setShowTransactionsModal(false)}
+          >
+            <motion.div
+              onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="bg-theme-card p-6 rounded-3xl w-full max-w-lg shadow-2xl border border-theme-border/50 max-h-[85vh] flex flex-col flex-nowrap"
+            >
+              <h2 className="text-2xl font-bold mb-2 flex items-center gap-2"><FiList /> Transaction History</h2>
+              <p className="text-sm text-theme-text/60 mb-6 shrink-0">
+                Log of all items sold from your stores.
+              </p>
+              <div className="flex flex-col gap-3 overflow-y-auto pr-2 pb-4 scrollbar-hidden">
+                {transactionLogs?.map((log: any) => (
+                  <div
+                    key={log._id}
+                    className="flex flex-col bg-theme-background border border-theme-border/50 p-4 rounded-2xl gap-1"
+                  >
+                    <span className="font-semibold text-[15px]">{log.message}</span>
+                    <span className="text-xs text-theme-text/50 font-medium">
+                      {new Date(log.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+                {(!transactionLogs || transactionLogs.length === 0) && (
+                  <div className="text-center italic text-theme-text/50 py-4 border border-theme-border/20 rounded-2xl bg-theme-background/30">
+                    No transactions recorded yet.
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end mt-2 pt-4 border-t border-theme-border/50 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowTransactionsModal(false)}
                   className="px-6 py-2 rounded-xl bg-theme-background border border-theme-border text-theme-text font-bold hover:bg-theme-border/50 transition-colors"
                 >
                   Close

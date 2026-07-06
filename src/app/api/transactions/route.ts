@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { dbConnect, Shop } from "@/db/model";
+import { dbConnect, Shop, Transaction } from "@/db/model";
 
-// A mock schema since Transaction schema wasn't fully defined in DB model from the user prompt for v2,
-// but we can just use Shop model to decrement the shop inventory upon a sale.
-// We will just do the item decrement as per the prompt requirement ("shop inventory decrements").
 export async function POST(req: Request) {
     try {
         const { userId } = await auth();
@@ -15,12 +12,10 @@ export async function POST(req: Request) {
 
         await dbConnect();
 
-        // Admin might have several shops, Sales might just be assigned a store, but let's just 
-        // find the shop and decrement it. (Checking clerkId is useful for security, but the storeId bounds it too)
-        const shop = await Shop.findById(shopId);
+        const shop = await Shop.findById(shopId).populate("inventory.itemId");
         if (!shop) return new NextResponse("Shop not found", { status: 404 });
 
-        const shopItem = shop.inventory.find((i: any) => i.itemId.toString() === itemId);
+        const shopItem = shop.inventory.find((i: any) => i.itemId._id.toString() === itemId);
         if (!shopItem || shopItem.amount < amountSold) {
             return new NextResponse("Not enough items in shop", { status: 400 });
         }
@@ -28,9 +23,12 @@ export async function POST(req: Request) {
         shopItem.amount -= amountSold;
         await shop.save();
 
+        const message = `Item ${shopItem.itemId.name} sold from Shop ${shop.title}`;
+        await Transaction.create({ clerkId: shop.clerkId, message });
+
         return NextResponse.json({ success: true, shop });
-    } catch (error) {
-        return new NextResponse("Internal Error", { status: 500 });
+    } catch (error: any) {
+        return new NextResponse(error.message || "Internal Error", { status: 500 });
     }
 }
 
