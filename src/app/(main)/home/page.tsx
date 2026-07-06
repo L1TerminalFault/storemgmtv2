@@ -19,9 +19,11 @@ import {
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { CgSpinner } from "react-icons/cg";
+import { useRouter } from "next/navigation";
 import { useStoreStore } from "@/lib/store";
 
 export default function HomeDashboard() {
+  const router = useRouter();
   const effectiveUser = useStoreStore((s) => s.effectiveUser);
   const [storage, setStorage] = useState<any>(null);
   const [shops, setShops] = useState<any[]>([]);
@@ -45,6 +47,7 @@ export default function HomeDashboard() {
       if (!effectiveUser) return;
       try {
         if (effectiveUser.role === "Sales") {
+	  router.replace("/transactions");
           const res = await fetch("/api/transactions");
           if (res.ok) setStorage(await res.json());
         } else {
