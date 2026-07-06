@@ -274,42 +274,48 @@ useEffect(() => {
           </p>
         </div>
         {isAdmin && effectiveUser && (
-          <div className="flex flex-col sm:flex-row gap-3 shrink-0 w-full sm:w-auto">
-            <button
-              onClick={() => setShowAddCatalogItemModal(true)}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-theme-background border border-theme-accent/50 text-theme-accent rounded-full font-semibold hover:bg-theme-accent/10 transition-all shrink-0"
-            >
-              <FiList /> Draft New Item
-            </button>
-            <button
-              onClick={() => setShowAddToStorageModal(true)}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-theme-accent text-theme-background rounded-full font-semibold hover:opacity-90 transition-all shrink-0"
-            >
-              <FiPlus /> Add to Store
-            </button>
-            <button
-              onClick={() => setShowResetModal(true)}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-theme-card border border-red-500/50 text-red-400 rounded-full font-semibold hover:bg-red-500/10 transition-all shrink-0"
-            >
-              <FiAlertTriangle /> Reset All
-            </button>
-            <button
-              onClick={() => setShowTransactionsModal(true)}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-theme-background border border-theme-border text-theme-text rounded-full font-semibold hover:bg-theme-border/50 transition-all shrink-0"
-            >
-              <FiList /> Transactions
-            </button>
-            <button
-              onClick={() => setShowNotifications(true)}
-              className="relative p-2.5 bg-theme-background border border-theme-border rounded-full hover:bg-theme-border/50 transition-all shrink-0"
-            >
-              <FiBell className="text-xl" />
-              {notificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-theme-background">
-                  {notificationCount}
-                </span>
-              )}
-            </button>
+          <div className="flex flex-col lg:flex-row gap-3 shrink-0 w-full lg:w-auto">
+            <div className="grid grid-cols-2 lg:flex lg:flex-row gap-3 w-full lg:w-auto">
+              <button
+                onClick={() => setShowAddCatalogItemModal(true)}
+                className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2.5 bg-theme-background border border-theme-accent/50 text-theme-accent rounded-full font-semibold hover:bg-theme-accent/10 transition-all shrink-0 text-sm sm:text-base cursor-pointer"
+              >
+                <FiList /> Draft Item
+              </button>
+              <button
+                onClick={() => setShowAddToStorageModal(true)}
+                className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2.5 bg-theme-accent text-theme-background rounded-full font-semibold hover:opacity-90 transition-all shrink-0 text-sm sm:text-base cursor-pointer"
+              >
+                <FiPlus /> Add to Store
+              </button>
+            </div>
+            <div className="grid grid-cols-2 lg:flex lg:flex-row gap-3 w-full lg:w-auto">
+              <button
+                onClick={() => setShowResetModal(true)}
+                className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2.5 bg-theme-card border border-red-500/50 text-red-400 rounded-full font-semibold hover:bg-red-500/10 transition-all shrink-0 text-sm sm:text-base cursor-pointer"
+              >
+                <FiAlertTriangle /> Reset All
+              </button>
+              <div className="flex items-center gap-3 w-full">
+                <button
+                  onClick={() => setShowTransactionsModal(true)}
+                  className="flex flex-1 items-center justify-center gap-2 px-3 sm:px-5 py-2.5 bg-theme-background border border-theme-border text-theme-text rounded-full font-semibold hover:bg-theme-border/50 transition-all shrink-0 text-sm sm:text-base cursor-pointer"
+                >
+                  <FiList /> Logs
+                </button>
+                <button
+                  onClick={() => setShowNotifications(true)}
+                  className="relative flex items-center justify-center p-3 sm:p-2.5 bg-theme-background border border-theme-border rounded-full hover:bg-theme-border/50 transition-all shrink-0 cursor-pointer"
+                >
+                  <FiBell className="text-xl" />
+                  {notificationCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-theme-background">
+                      {notificationCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

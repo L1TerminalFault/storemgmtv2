@@ -31,9 +31,11 @@ const loadData = useCallback(async () => {
     if (res.ok) {
       const data = await res.json();
       if (data.length > 0) {
-        // Optimize: Only set the initial store if one isn't already active
-        // This prevents overwriting user state or flashing the UI every 10 seconds
-        setActiveStore(prev => (prev ? prev : data[0]));
+        setActiveStore(prev => {
+          if (!prev) return data[0];
+          const updatedStore = data.find((s: ShopType) => s._id === prev._id);
+          return updatedStore || prev;
+        });
       }
     }
   } catch (e) {
