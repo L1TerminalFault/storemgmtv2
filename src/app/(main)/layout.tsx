@@ -41,7 +41,7 @@ export default function MainLayout({
 
 	return (
 		<ClerkProvider
-            afterSignOutUrl="/home"
+            afterSignOutUrl="/"
             appearance={{
                 theme: dark,
             }}
