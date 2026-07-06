@@ -70,7 +70,7 @@ const loadData = useCallback(async () => {
 
 // 2. Manage the orchestrating loop cleanly without infinite reruns
 useEffect(() => {
-  let timerId;
+  let timerId: NodeJS.Timeout;
   let isMounted = true;
 
   async function poll() {
@@ -80,7 +80,7 @@ useEffect(() => {
     if (isMounted) {
       setSyncing(false);
       // Wait exactly 10 seconds AFTER the requests finish before firing again
-      timerId = setTimeout(poll, 10000);
+      timerId = setTimeout(poll, 5000);
     }
   }
 

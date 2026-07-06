@@ -85,7 +85,7 @@ const loadData = useCallback(async () => {
 
 // 2. Handle the Polling Orchestration smoothly
 useEffect(() => {
-  let timerId;
+  let timerId: NodeJS.Timeout;
   let isMounted = true;
 
   async function poll() {
@@ -95,7 +95,7 @@ useEffect(() => {
     if (isMounted) {
       setSyncing(false);
       // Wait 10 seconds AFTER the fetch finishes before polling again
-      timerId = setTimeout(poll, 10000); 
+      timerId = setTimeout(poll, 5000); 
     }
   }
 

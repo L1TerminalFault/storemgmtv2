@@ -45,7 +45,7 @@ const loadData = useCallback(async () => {
 
 // 2. Safely orchestrate the network pacing loop
 useEffect(() => {
-  let timerId;
+  let timerId: NodeJS.Timeout;
   let isMounted = true;
 
   async function poll() {
@@ -55,7 +55,7 @@ useEffect(() => {
     if (isMounted) {
       setSyncing(false);
       // Wait exactly 10 seconds after the network payload lands
-      timerId = setTimeout(poll, 10000);
+      timerId = setTimeout(poll, 5000);
     }
   }
 
