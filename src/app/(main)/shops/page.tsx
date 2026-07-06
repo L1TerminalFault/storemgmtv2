@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiPlus, FiBox, FiUserPlus } from "react-icons/fi";
 import { CgSpinner } from "react-icons/cg";
@@ -38,9 +38,9 @@ export default function ShopsPage() {
     message: "",
   });
 
-  useEffect(() => {
-    async function loadData() {
+    const loadData = useCallback(async function() {
       if (!effectiveUser) return;
+
       try {
         const [shopsRes, storageRes] = await Promise.all([
           fetch("/api/shops"),
@@ -57,9 +57,11 @@ export default function ShopsPage() {
       } finally {
         setLoading(false);
       }
-    }
-    loadData();
-  }, [effectiveUser]);
+    }, [effectiveUser]);
+
+  useEffect(() => {
+    (() => loadData())();
+  }, [effectiveUser, loadData]);
 
   const handleCreateShop = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -98,6 +100,7 @@ export default function ShopsPage() {
       setShowTransferModal(false);
       setTransferItemId("");
       setTransferAmount("");
+      loadData();
     }
   };
 
