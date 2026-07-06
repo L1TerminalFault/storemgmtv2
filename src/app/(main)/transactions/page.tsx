@@ -46,7 +46,7 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     (() => loadData())();
-    setInterval(loadData, 5);
+    setInterval(loadData, 5000);
   }, [loadData]);
 
   const handleSell = async (e: React.SubmitEvent<HTMLFormElement>) => {

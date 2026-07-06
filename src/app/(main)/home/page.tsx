@@ -83,7 +83,7 @@ export default function HomeDashboard() {
 
   useEffect(() => {
     (() => loadData())();
-    setInterval(loadData, 5);
+    setInterval(loadData, 5000);
   }, [loadData]);
 
   const handleCreateCatalogItem = async (
