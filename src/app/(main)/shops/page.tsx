@@ -52,7 +52,7 @@ export default function ShopsPage() {
         if (shopsRes.ok) {
           const data = await shopsRes.json();
           setShops(data);
-          if (data.length > 0) setSelectedShopId(data[0]._id);
+          if (data.length > 0) setSelectedShopId(prev => prev ? prev : data[0]._id);
         }
         if (storageRes.ok) setStorage(await storageRes.json());
       } catch (e) {
