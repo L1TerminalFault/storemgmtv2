@@ -55,7 +55,7 @@ useEffect(() => {
     if (isMounted) {
       setSyncing(false);
       // Wait exactly 10 seconds after the network payload lands
-      timerId = setTimeout(poll, 5000);
+      timerId = setTimeout(poll, 15000);
     }
   }
 
