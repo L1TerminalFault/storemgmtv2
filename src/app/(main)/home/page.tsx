@@ -41,6 +41,7 @@ export default function HomeDashboard() {
   const [catalogItems, setCatalogItems] = useState<ItemType[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [polling, setPolling] = useState(false);
 
   // Modal States
   const [showAddCatalogItemModal, setShowAddCatalogItemModal] = useState(false);
@@ -102,11 +103,11 @@ useEffect(() => {
   let isMounted = true;
 
   async function poll() {
-    setSyncing(true);
+    setPolling(true);
     await loadData();
     
     if (isMounted) {
-      setSyncing(false);
+      setPolling(false);
       // Wait 15 seconds AFTER the fetch finishes before polling again
       timerId = setTimeout(poll, 15000); 
     }

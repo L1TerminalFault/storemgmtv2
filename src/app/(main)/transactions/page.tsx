@@ -12,6 +12,7 @@ export default function TransactionsPage() {
   const [activeStore, setActiveStore] = useState<ShopType | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [polling, setPolling] = useState(false);
 
   const [selectedItem, setSelectedItem] = useState<InventoryShopType | null>(
     null,
@@ -52,11 +53,11 @@ useEffect(() => {
   let isMounted = true;
 
   async function poll() {
-    setSyncing(true);
+    setPolling(true);
     await loadData();
     
     if (isMounted) {
-      setSyncing(false);
+      setPolling(false);
       // Wait exactly 15 seconds after the network payload lands
       timerId = setTimeout(poll, 15000);
     }

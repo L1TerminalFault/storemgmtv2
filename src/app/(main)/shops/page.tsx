@@ -18,6 +18,7 @@ export default function ShopsPage() {
   const [storage, setStorage] = useState<StorageType | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [polling, setPolling] = useState(false);
 
   // UI selections
   const [selectedShopId, setSelectedShopId] = useState("");
@@ -74,11 +75,11 @@ useEffect(() => {
   let isMounted = true;
 
   async function poll() {
-    setSyncing(true);
+    setPolling(true);
     await loadData();
     
     if (isMounted) {
-      setSyncing(false);
+      setPolling(false);
       // Wait exactly 15 seconds AFTER the requests finish before firing again
       timerId = setTimeout(poll, 15000);
     }
