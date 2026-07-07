@@ -67,6 +67,13 @@ const shopSchema = new mongoose.Schema({
         ref: "Item",
       },
       amount: Number,
+      history: [
+        {
+          _id: false,
+          date: Date,
+          amountAdded: Number
+        }
+      ]
     },
   ],
   __more: String,

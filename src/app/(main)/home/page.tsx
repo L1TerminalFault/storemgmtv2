@@ -655,7 +655,8 @@ useEffect(() => {
                   onChange={(e) => setStorageItemAmount(e.target.value)}
                   required
                   type="number"
-                  min="1"
+                  min="0"
+                  step="any"
                   placeholder="Quantity to Add"
                   className="w-full bg-theme-background border border-theme-border rounded-xl p-3 outline-none focus:border-theme-accent"
                 />

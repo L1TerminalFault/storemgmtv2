@@ -26,6 +26,11 @@ export async function POST(req: Request) {
 
         await dbConnect();
 
+        const existing = await Item.findOne({ clerkId: userId, name: new RegExp('^' + name + '$', 'i') });
+        if (existing) {
+            return new NextResponse("Item already exists", { status: 400 });
+        }
+
         const item = await Item.create({ clerkId: userId, name, unitPrice, type });
 
         return NextResponse.json(item);

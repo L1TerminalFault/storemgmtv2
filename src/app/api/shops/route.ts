@@ -68,8 +68,14 @@ export async function PUT(req: Request) {
         const shopItem = shop.inventory.find((i: any) => i.itemId.toString() === itemId);
         if (shopItem) {
             shopItem.amount += amount;
+            if (!shopItem.history) shopItem.history = [];
+            shopItem.history.push({ date: new Date(), amountAdded: amount });
         } else {
-            shop.inventory.push({ itemId, amount });
+            shop.inventory.push({ 
+                itemId, 
+                amount,
+                history: [{ date: new Date(), amountAdded: amount }]
+            });
         }
 
         await shop.save();

@@ -32,6 +32,9 @@ export default function ShopsPage() {
   const [showCreateShopModal, setShowCreateShopModal] = useState(false);
   const [newShopTitle, setNewShopTitle] = useState("");
 
+  // Modal History
+  const [historyItem, setHistoryItem] = useState<any>(null);
+
   // Modal Assign Staff
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
   const [staffEmail, setStaffEmail] = useState("");
@@ -257,7 +260,8 @@ useEffect(() => {
               (inv: InventoryShopType, idx: number) => (
                 <div
                   key={idx}
-                  className="bg-theme-card border border-theme-border/40 p-5 rounded-2xl flex items-center gap-4 shadow-lg hover:border-theme-accent/40 transition-colors"
+                  onClick={() => setHistoryItem(inv)}
+                  className="bg-theme-card border border-theme-border/40 p-5 rounded-2xl flex items-center gap-4 shadow-lg hover:border-theme-accent/40 cursor-pointer transition-colors"
                 >
                   <div className="p-3 bg-theme-background text-theme-accent rounded-xl border border-theme-border">
                     <FiBox className="text-2xl" />
@@ -470,6 +474,65 @@ useEffect(() => {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* History Modal */}
+      <AnimatePresence>
+        {historyItem && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setHistoryItem(null)}
+          >
+            <motion.div
+              onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-theme-card p-6 rounded-3xl w-full max-w-md shadow-2xl border border-theme-border/50 max-h-[80vh] flex flex-col"
+            >
+              <h2 className="text-2xl font-bold mb-2">Item Added History</h2>
+              <p className="text-sm text-theme-text/60 mb-6">
+                History of times the admin added <strong>{historyItem.itemId?.name}</strong> to this shop.
+              </p>
+
+              <div className="flex flex-col gap-3 overflow-y-auto pr-2 pb-4 scrollbar-hidden">
+                {historyItem.history && historyItem.history.length > 0 ? (
+                  historyItem.history.map((hist: any, index: number) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center bg-theme-background border border-theme-border/50 p-4 rounded-2xl"
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-bold text-[15px]">
+                          {new Date(hist.date).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full font-bold text-sm">
+                          +{hist.amountAdded} added
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center italic text-theme-text/50 py-4">
+                    No history recorded for this item.
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end mt-4 pt-4 border-t border-theme-border/50 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setHistoryItem(null)}
+                  className="px-6 py-2 rounded-xl bg-theme-background border border-theme-border text-theme-text font-bold hover:bg-theme-border/50 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
