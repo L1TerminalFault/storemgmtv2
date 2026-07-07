@@ -45,6 +45,7 @@ export default function HomeDashboard() {
 
   // Modal States
   const [showAddCatalogItemModal, setShowAddCatalogItemModal] = useState(false);
+  const [showManageCatalogModal, setShowManageCatalogModal] = useState(false);
   const [showAddToStorageModal, setShowAddToStorageModal] = useState(false);
   const [showStorageItemsModal, setShowStorageItemsModal] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
@@ -130,12 +131,19 @@ useEffect(() => {
     setCatalogError("");
     e.preventDefault();
     try {
+      const parsedPrice = Number(newItemPrice.replace(',', '.'));
+      if (isNaN(parsedPrice) || parsedPrice <= 0) {
+        setCatalogError("Invalid price format.");
+        setSyncing(false);
+        return;
+      }
+      
       const res = await fetch("/api/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: newItemName,
-          unitPrice: Number(newItemPrice),
+          unitPrice: parsedPrice,
           type: "General",
         }),
       });
@@ -156,6 +164,25 @@ useEffect(() => {
     }
   };
 
+  const handleUpdateItem = async (itemId: string, newPrice: string) => {
+    try {
+      const parsedPrice = Number(newPrice.replace(',', '.'));
+      if (isNaN(parsedPrice) || parsedPrice <= 0) return;
+
+      const res = await fetch("/api/items", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId, unitPrice: parsedPrice }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setCatalogItems(prev => prev.map(i => i._id === updated._id ? updated : i));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleAddItemToStorage = async (
     e: React.SubmitEvent<HTMLFormElement>,
   ) => {
@@ -163,12 +190,19 @@ useEffect(() => {
     setStorageError("");
     e.preventDefault();
     try {
+      const parsedAmount = Number(storageItemAmount.replace(',', '.'));
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        setStorageError("Invalid fractional amount.");
+        setSyncing(false);
+        return;
+      }
+
       const res = await fetch("/api/storage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           itemId: storageItemId,
-          amount: Number(storageItemAmount),
+          amount: parsedAmount,
         }),
       });
       if (res.ok) {
@@ -281,7 +315,13 @@ useEffect(() => {
                 onClick={() => setShowAddCatalogItemModal(true)}
                 className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2.5 bg-theme-background border border-theme-accent/50 text-theme-accent rounded-full font-semibold hover:bg-theme-accent/10 transition-all shrink-0 text-sm sm:text-base cursor-pointer"
               >
-                <FiList /> Draft Item
+                <FiPlus /> Draft
+              </button>
+              <button
+                onClick={() => setShowManageCatalogModal(true)}
+                className="flex items-center justify-center gap-2 px-3 sm:px-5 py-2.5 bg-theme-background border border-theme-border/50 text-theme-text rounded-full font-semibold hover:bg-theme-border/20 transition-all shrink-0 text-sm sm:text-base cursor-pointer"
+              >
+                <FiList /> Catalog
               </button>
               <button
                 onClick={() => setShowAddToStorageModal(true)}
@@ -545,6 +585,62 @@ useEffect(() => {
         </div>
       )}
 
+      {/* Modal for Managing Catalog Prices */}
+      <AnimatePresence>
+        {showManageCatalogModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setShowManageCatalogModal(false)}
+          >
+            <motion.div
+              onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="bg-theme-card p-6 rounded-3xl w-full max-w-lg shadow-2xl border border-theme-border/50 max-h-[80vh] flex flex-col"
+            >
+              <h2 className="text-2xl font-bold mb-2">Manage Catalog Templates</h2>
+              <p className="text-sm text-theme-text/60 mb-6 shrink-0">
+                Update the master unit price for any currently drafted items.
+              </p>
+
+              <div className="flex flex-col gap-3 overflow-y-auto pr-2 pb-4 scrollbar-hidden">
+                {catalogItems.map((cItem: ItemType) => (
+                  <div key={cItem._id} className="flex justify-between items-center bg-theme-background border border-theme-border/50 p-4 rounded-2xl gap-4">
+                    <span className="font-bold text-lg max-w-[200px] truncate">{cItem.name}</span>
+                    <div className="flex items-center gap-2">
+                       <span className="text-emerald-400 font-black">$</span>
+                       <input 
+                         type="text" 
+                         inputMode="decimal"
+                         pattern="[0-9]+([.,][0-9]+)?"
+                         defaultValue={cItem.unitPrice} 
+                         onBlur={(e) => handleUpdateItem(cItem._id, e.target.value)}
+                         className="bg-theme-card border border-theme-border rounded-xl p-2 outline-none focus:border-theme-accent w-24 text-center font-bold"
+                       />
+                    </div>
+                  </div>
+                ))}
+                {catalogItems.length === 0 && (
+                  <div className="text-center italic text-theme-text/50 py-4">
+                    No items found in your catalog.
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end mt-4 pt-4 border-t border-theme-border/50 shrink-0">
+                <button
+                  onClick={() => setShowManageCatalogModal(false)}
+                  className="px-6 py-2 rounded-xl bg-theme-accent text-theme-background font-bold hover:opacity-90"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Modal for adding New Item Catalog */}
       <AnimatePresence>
         {showAddCatalogItemModal && (
@@ -578,9 +674,10 @@ useEffect(() => {
                   value={newItemPrice}
                   onChange={(e) => setNewItemPrice(e.target.value)}
                   required
-                  type="number"
-                  step="0.01"
-                  placeholder="Item Unit Price ($)"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]+([.,][0-9]+)?"
+                  placeholder="Item Unit Price ($ e.g. 1.5)"
                   className="w-full bg-theme-background border border-theme-border rounded-xl p-3 outline-none focus:border-theme-accent"
                 />
                 <AnimatePresence>
@@ -654,10 +751,10 @@ useEffect(() => {
                   value={storageItemAmount}
                   onChange={(e) => setStorageItemAmount(e.target.value)}
                   required
-                  type="number"
-                  min="0"
-                  step="any"
-                  placeholder="Quantity to Add"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]+([.,][0-9]+)?"
+                  placeholder="Quantity to Add (e.g. 1.5)"
                   className="w-full bg-theme-background border border-theme-border rounded-xl p-3 outline-none focus:border-theme-accent"
                 />
                 <AnimatePresence>

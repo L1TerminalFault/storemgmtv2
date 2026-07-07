@@ -119,13 +119,20 @@ useEffect(() => {
   const handleTransfer = async (e: React.SubmitEvent<HTMLFormElement>) => {
         setSyncing(true);
     e.preventDefault();
+
+    const parsedAmount = Number(transferAmount.replace(',', '.'));
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      setSyncing(false);
+      return; 
+    }
+
     const res = await fetch("/api/shops", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         shopId: selectedShopId,
         itemId: transferItemId,
-        amount: Number(transferAmount),
+        amount: parsedAmount,
       }),
     });
 
@@ -389,9 +396,10 @@ useEffect(() => {
                   value={transferAmount}
                   onChange={(e) => setTransferAmount(e.target.value)}
                   required
-                  type="number"
-                  min="1"
-                  placeholder="Amount to transfer"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]+([.,][0-9]+)?"
+                  placeholder="Amount to transfer (e.g. 1.5)"
                   className="w-full bg-theme-background border border-theme-border rounded-xl p-3 outline-none focus:border-theme-accent text-theme-text"
                 />
 

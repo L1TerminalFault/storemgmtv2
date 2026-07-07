@@ -79,6 +79,13 @@ useEffect(() => {
     e.preventDefault();
     if (!selectedItem || !activeStore) return;
 
+    const parsedAmount = Number(sellAmount.replace(',', '.'));
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      setSellError("Invalid fractional amount.");
+      setSyncing(false);
+      return; 
+    }
+
     try {
       const res = await fetch("/api/transactions", {
         method: "POST",
@@ -86,7 +93,7 @@ useEffect(() => {
         body: JSON.stringify({
           shopId: activeStore._id,
           itemId: selectedItem.itemId?._id,
-          amountSold: Number(sellAmount),
+          amountSold: parsedAmount,
         }),
       });
 
@@ -223,10 +230,10 @@ useEffect(() => {
                   value={sellAmount}
                   onChange={(e) => setSellAmount(e.target.value)}
                   required
-                  type="number"
-                  min="1"
-                  max={selectedItem?.amount}
-                  placeholder="Enter amount to sell"
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]+([.,][0-9]+)?"
+                  placeholder="Enter amount to sell (e.g. 1.5)"
                   className="w-full text-center text-2xl font-bold bg-theme-background border border-theme-border rounded-2xl p-4 outline-none focus:border-theme-accent text-theme-text transition-colors"
                 />
 
@@ -237,7 +244,7 @@ useEffect(() => {
                   <span className="font-black text-xl">
                     $
                     {(
-                      (Number(sellAmount) || 0) *
+                      (Number(sellAmount.replace(',', '.')) || 0) *
                       (selectedItem?.itemId?.unitPrice || 0)
                     ).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </span>

@@ -38,3 +38,27 @@ export async function POST(req: Request) {
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
+
+export async function PUT(req: Request) {
+    try {
+        const { userId } = await auth();
+        if (!userId) return new NextResponse("Unauthorized", { status: 401 });
+
+        const body = await req.json();
+        const { itemId, unitPrice } = body;
+
+        await dbConnect();
+
+        const item = await Item.findOneAndUpdate(
+            { _id: itemId, clerkId: userId }, 
+            { $set: { unitPrice } },
+            { new: true }
+        );
+
+        if (!item) return new NextResponse("Not Found", { status: 404 });
+
+        return NextResponse.json(item);
+    } catch (error) {
+        return new NextResponse("Internal Error", { status: 500 });
+    }
+}
