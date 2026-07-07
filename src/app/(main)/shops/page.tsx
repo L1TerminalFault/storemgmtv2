@@ -281,7 +281,7 @@ useEffect(() => {
                       <span>
                         Stock:{" "}
                         <span className="font-bold text-theme-text bg-theme-background px-2 py-0.5 rounded-md">
-                          {inv.amount}
+                          {inv.amount.toFixedd(2)}
                         </span>
                       </span>
                       <span>${inv.itemId.unitPrice}</span>
