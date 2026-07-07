@@ -281,7 +281,7 @@ useEffect(() => {
                       <span>
                         Stock:{" "}
                         <span className="font-bold text-theme-text bg-theme-background px-2 py-0.5 rounded-md">
-                          {inv.amount.toFixed(2)}
+                          {inv.amount.includes(".") ? toFixed(1) : inv.amount}
                         </span>
                       </span>
                       <span>${inv.itemId.unitPrice}</span>
