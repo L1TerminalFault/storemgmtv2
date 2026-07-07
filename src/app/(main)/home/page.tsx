@@ -281,12 +281,12 @@ useEffect(() => {
   const lowStock: any[] = [];
   if (isAdmin) {
     storage?.inventory?.forEach((item: any) => {
-      if (item.amount < 50) lowStock.push({ ...item, source: "Storage" });
+      if (item.amount < 5) lowStock.push({ ...item, source: "Storage" });
     });
   }
   shops.forEach((shop: any) => {
     shop.inventory?.forEach((item: any) => {
-      if (item.amount < 50) lowStock.push({ ...item, source: `Shop: ${shop.title}` });
+      if (item.amount < 5) lowStock.push({ ...item, source: `Shop: ${shop.title}` });
     });
   });
   const notificationCount = lowStock.length;
