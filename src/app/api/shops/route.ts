@@ -8,9 +8,9 @@ export async function GET(req: Request) {
 	// 	acceptsToken: "session_token",
 	// });
 	
-	const {isAuthenticated, userId} = (await (await clerkClient()).authenticateRequest(req)).toAuth();
+	const {userId} = (await (await clerkClient()).authenticateRequest(req)).toAuth();
 
-	console.log("Auth State: ",{ isAuthenticated, userId } );
+	console.log("Auth State: ",{ userId } );
 
         if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
