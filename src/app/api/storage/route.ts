@@ -4,9 +4,14 @@ import { dbConnect, Storage, Item } from "@/db/model";
 
 export async function GET(req: Request) {
     try {
-        const { userId } = await auth({
-		acceptsToken: "session_token",
-	});
+	let { userId } = await auth();
+
+        if (!userId) {
+            const { searchParams } = new URL(req.url);
+            userId = searchParams.get("userId") || null;
+            // console.log("Fallback triggered. Extracted userId from query params:", userId);
+        }
+
         if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
         await dbConnect();

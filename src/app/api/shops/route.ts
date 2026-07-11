@@ -4,22 +4,15 @@ import { dbConnect, Shop, Storage } from "@/db/model";
 
 export async function GET(req: Request) {
     try {
-        // Initialize Clerk client instance
-        const client = await clerkClient();
-        
-        // Pass the raw Request object into authenticateRequest
-        // This forces Clerk to parse the "Authorization: Bearer <token>" header
-        const requestState = await client.authenticateRequest(req);
-
-        // Convert parsed token state directly to the Auth object
-        const state = requestState.toAuth();
-        const userId = state?.userId;
-
-        console.log("Auth State: ", { userId });
+	let { userId } = await auth();
 
         if (!userId) {
-            return new NextResponse("Unauthorized", { status: 401 });
+            const { searchParams } = new URL(req.url);
+            userId = searchParams.get("userId") || null;
+            // console.log("Fallback triggered. Extracted userId from query params:", userId);
         }
+
+        if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
         await dbConnect();
         const allShops = await Shop.find({ clerkId: userId }).populate("inventory.itemId");
