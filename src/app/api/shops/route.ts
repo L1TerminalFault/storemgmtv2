@@ -4,22 +4,29 @@ import { dbConnect, Shop, Storage } from "@/db/model";
 
 export async function GET(req: Request) {
     try {
-        // const { isAuthenticated, userId } = await auth({
-	// 	acceptsToken: "session_token",
-	// });
-	
-	const state = (await (await clerkClient()).authenticateRequest(req)).toAuth();
+        // Initialize Clerk client instance
+        const client = await clerkClient();
+        
+        // Pass the raw Request object into authenticateRequest
+        // This forces Clerk to parse the "Authorization: Bearer <token>" header
+        const requestState = await client.authenticateRequest(req);
 
-	const userId = state?.userId || null;
-	console.log("Auth State: ",{ userId } );
+        // Convert parsed token state directly to the Auth object
+        const state = requestState.toAuth();
+        const userId = state?.userId;
 
-        if (!userId) return new NextResponse("Unauthorized", { status: 401 });
+        console.log("Auth State: ", { userId });
+
+        if (!userId) {
+            return new NextResponse("Unauthorized", { status: 401 });
+        }
 
         await dbConnect();
         const allShops = await Shop.find({ clerkId: userId }).populate("inventory.itemId");
 
         return NextResponse.json(allShops || []);
     } catch (error) {
+        console.error("Route Error: ", error);
         return new NextResponse("Internal Error", { status: 500 });
     }
 }
