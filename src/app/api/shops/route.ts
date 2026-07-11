@@ -4,7 +4,9 @@ import { dbConnect, Shop, Storage } from "@/db/model";
 
 export async function GET(req: Request) {
     try {
-        const { userId } = await auth();
+        const { userId } = await auth({
+		acceptsToken: "session_token",
+	});
         if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
         await dbConnect();
