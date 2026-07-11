@@ -8,7 +8,7 @@ export async function GET(req: Request) {
 	// 	acceptsToken: "session_token",
 	// });
 	
-	const {isAuthenticated, userId} = (await (await clerkClient()).authenticateRequest(req));
+	const {isAuthenticated, userId} = (await (await clerkClient()).authenticateRequest(req)).toAuth();
 
 	console.log("Auth State: ",{ isAuthenticated, userId } );
 
